@@ -18,3 +18,12 @@ class UsersRepo:
     async def get(self, user_id: str) -> dict | None:
         res = self.db.table("users").select("*").eq("id", user_id).maybe_single().execute()
         return res.data
+
+    async def upsert_auth_user(self, auth_id: str, email: str) -> dict:
+        data = {"id": auth_id, "auth_id": auth_id, "email": email}
+        res = (
+            self.db.table("users")
+            .upsert(data, on_conflict="auth_id")
+            .execute()
+        )
+        return res.data[0]
