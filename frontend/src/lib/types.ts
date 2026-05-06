@@ -2,6 +2,14 @@ export type Coord = { row: number; col: number };
 
 export type GameMode = "pvbot_easy" | "pvbot_medium" | "pvbot_hard" | "hotseat";
 
+export type PlacedShip = {
+  name: string;
+  size: number;
+  row: number;
+  col: number;
+  orientation: "H" | "V";
+};
+
 export type ShotResult = {
   result: "hit" | "miss" | "sunk";
   sunk_ship?: string | null;
