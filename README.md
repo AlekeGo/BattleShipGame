@@ -1,4 +1,4 @@
-# Battleship Coach
+# Ocean Strike
 
 > The only Battleship that makes you better at Battleship.
 

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Battleship Coach",
+  title: "Ocean Strike",
   description: "The only Battleship that makes you better at Battleship.",
 };
 

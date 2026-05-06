@@ -1,4 +1,4 @@
-# Battleship Coach — Technical Specification
+# Ocean Strike — Technical Specification
 
 > "The only Battleship that makes you better at Battleship."
 >
@@ -242,7 +242,7 @@ These features are passed to the LLM as a JSON blob. The LLM does not see raw mo
 
 ```python
 SYSTEM_PROMPT = """
-You are Battleship Coach, an expert Battleship strategy analyst. You analyze
+You are Ocean Strike Coach, an expert Battleship strategy analyst. You analyze
 a player's behavioral patterns from a single game and give them honest,
 specific, actionable feedback.
 

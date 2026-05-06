@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import users, games, analyze, stats, leaderboard
 from app.config import settings
 
-app = FastAPI(title="Battleship Coach API")
+app = FastAPI(title="Ocean Strike API")
 
 app.add_middleware(
     CORSMiddleware,
