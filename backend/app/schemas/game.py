@@ -20,8 +20,21 @@ class GameCreate(BaseModel):
 
 class GameCreated(BaseModel):
     game_id: str
-    ship_fleet: list[dict]
+    fleet: list[dict]
 
 
 class PlacementRequest(BaseModel):
     ships: list[ShipPlacement]
+
+
+class AutoPlaceResponse(BaseModel):
+    ships: list[dict]
+
+
+class GameState(BaseModel):
+    game_id: str
+    status: str
+    player_ships: list[dict]
+    player_shots_received: list[dict]
+    my_shots: list[dict]
+    winner: str | None
