@@ -1,3 +1,5 @@
+import uuid
+
 from supabase import Client
 
 
@@ -6,10 +8,13 @@ class UsersRepo:
         self.db = db
 
     async def create_anon(self) -> dict:
-        raise NotImplementedError
+        user_id = str(uuid.uuid4())
+        res = self.db.table("users").insert({"id": user_id}).execute()
+        return res.data[0]
 
     async def set_region(self, user_id: str, region: str) -> None:
-        raise NotImplementedError
+        self.db.table("users").update({"region": region}).eq("id", user_id).execute()
 
     async def get(self, user_id: str) -> dict | None:
-        raise NotImplementedError
+        res = self.db.table("users").select("*").eq("id", user_id).maybe_single().execute()
+        return res.data
