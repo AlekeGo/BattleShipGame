@@ -3,27 +3,14 @@
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 
-export function NavUser() {
+export function LandingNav() {
   const { user, loading, signOut } = useAuth();
 
-  if (loading) return null;
-
-  if (!user) {
-    return (
-      <Link href="/login" className="small-link">
-        Sign in
-      </Link>
-    );
-  }
-
-  const initial = (user.email ?? "?")[0].toUpperCase();
-  const display = user.email ?? "user";
-
-  return (
+  const authSection = loading ? null : user ? (
     <Link href="/profile" className="user-chip" style={{ cursor: "pointer", textDecoration: "none" }}>
-      <span className="avatar">{initial}</span>
+      <span className="avatar">{(user.email ?? "?")[0].toUpperCase()}</span>
       <span style={{ maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-        {display}
+        {user.email ?? "user"}
       </span>
       <button
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); signOut(); }}
@@ -33,5 +20,20 @@ export function NavUser() {
         out
       </button>
     </Link>
+  ) : (
+    <>
+      <Link href="/login" className="btn ghost">Sign in</Link>
+      <Link href="/play" className="btn">Play free</Link>
+    </>
+  );
+
+  return (
+    <nav className="nav">
+      <a href="#coach">The Coach</a>
+      <a href="#different">What&apos;s different</a>
+      <a href="#roadmap">Roadmap</a>
+      <Link href="/leaderboard">Leaderboard</Link>
+      {authSection}
+    </nav>
   );
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LandingNav } from "@/components/LandingNav";
 
 const DEMO_ROWS: string[][] = [
   ["","miss","","","","","","","","miss"],
@@ -29,14 +30,7 @@ export default function LandingPage() {
           </svg>
           Ocean Strike
         </div>
-        <nav className="nav">
-          <a href="#coach">The Coach</a>
-          <a href="#different">What&apos;s different</a>
-          <a href="#roadmap">Roadmap</a>
-          <Link href="/leaderboard">Leaderboard</Link>
-          <Link href="/login" className="btn ghost">Sign in</Link>
-          <Link href="/play" className="btn">Play free</Link>
-        </nav>
+        <LandingNav />
       </header>
 
       {/* HERO */}
