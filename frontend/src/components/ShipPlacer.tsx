@@ -93,6 +93,16 @@ export default function ShipPlacer({
         <span className="key"><span className="kbd">R</span> rotate ({orientation})</span>
         <span className="key"><span className="kbd">⌫</span> remove last</span>
       </div>
+
+      {isComplete && (
+        <button
+          className="btn big"
+          style={{ width: "100%", marginTop: 12 }}
+          onClick={() => onConfirm(placed)}
+        >
+          Start game →
+        </button>
+      )}
     </section>
   );
 }
