@@ -5,7 +5,7 @@ SELECT
   COUNT(g.id) FILTER (WHERE g.winner = 'player') AS wins,
   COUNT(g.id) AS total_games,
   ROUND(
-    100.0 * SUM(jsonb_array_length(g.moves) FILTER (WHERE g.winner = 'player'))
+    100.0 * SUM(CASE WHEN g.winner = 'player' THEN jsonb_array_length(g.moves) ELSE 0 END)
     / NULLIF(SUM(jsonb_array_length(g.moves)), 0),
     2
   ) AS accuracy_pct
