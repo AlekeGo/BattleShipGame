@@ -22,9 +22,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link href="/play" className="opacity-70 hover:opacity-100 transition-opacity">
                 Play
               </Link>
-              <Link href="/stats" className="opacity-70 hover:opacity-100 transition-opacity">
-                Stats
-              </Link>
               <Link href="/leaderboard" className="opacity-70 hover:opacity-100 transition-opacity">
                 Leaderboard
               </Link>
