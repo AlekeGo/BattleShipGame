@@ -58,3 +58,46 @@ def test_get_user_404_when_not_found():
         app.dependency_overrides.clear()
 
     assert res.status_code == 404
+
+
+def test_update_profile_saves_name_and_region():
+    mock_repo = MagicMock()
+    mock_repo.update_profile = AsyncMock(return_value={
+        "id": "user-123", "display_name": "New Name", "region": "Astana, KZ", "email": None
+    })
+
+    app.dependency_overrides[get_users_repo] = lambda: mock_repo
+    app.dependency_overrides[get_supabase] = lambda: MagicMock()
+
+    try:
+        client = TestClient(app)
+        res = client.patch(
+            "/api/users/user-123/profile",
+            json={"display_name": "New Name", "region": "Astana, KZ"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert res.status_code == 200
+    assert res.json()["display_name"] == "New Name"
+    assert res.json()["region"] == "Astana, KZ"
+    mock_repo.update_profile.assert_called_once_with("user-123", "New Name", "Astana, KZ")
+
+
+def test_update_profile_partial_update():
+    mock_repo = MagicMock()
+    mock_repo.update_profile = AsyncMock(return_value={
+        "id": "user-123", "display_name": None, "region": "Almaty, KZ", "email": None
+    })
+
+    app.dependency_overrides[get_users_repo] = lambda: mock_repo
+    app.dependency_overrides[get_supabase] = lambda: MagicMock()
+
+    try:
+        client = TestClient(app)
+        res = client.patch("/api/users/user-123/profile", json={"region": "Almaty, KZ"})
+    finally:
+        app.dependency_overrides.clear()
+
+    assert res.status_code == 200
+    mock_repo.update_profile.assert_called_once_with("user-123", None, "Almaty, KZ")

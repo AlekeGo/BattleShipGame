@@ -29,3 +29,13 @@ async def set_region(
 ):
     await repo.set_region(user_id, payload.region)
     return {"ok": True}
+
+
+@router.patch("/{user_id}/profile")
+async def update_profile(
+    user_id: str,
+    payload: ProfileUpdate,
+    repo: UsersRepo = Depends(get_users_repo),
+):
+    user = await repo.update_profile(user_id, payload.display_name, payload.region)
+    return user
