@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Stack
 
 - **Backend:** FastAPI (Python 3.11) + LangChain + OpenAI `gpt-4o-mini`, managed with `uv`. Tests via `pytest` (asyncio mode). Lint via `ruff`.
-- **Frontend:** Next.js 14 App Router + TypeScript + Tailwind + shadcn/ui, managed with `pnpm`. Auth via `@supabase/supabase-js` + `@supabase/ssr`.
+- **Frontend:** Next.js 14 App Router + TypeScript + Tailwind + shadcn/ui, managed with `npm` (`--legacy-peer-deps` required). Auth via `@supabase/supabase-js` + `@supabase/ssr`.
 - **DB:** Supabase Postgres (`lwkwgcfqxmwyclwjpmxb`, region: `ap-northeast-1`). Migrations in `backend/migrations/*.sql`. All 4 migrations are already applied to the remote project — do not re-apply `0001`–`0004`.
 
 ## Common commands
@@ -26,11 +26,11 @@ uv run ruff format .                                 # format
 
 Frontend (from `frontend/`):
 ```bash
-pnpm install
-pnpm dev          # :3000
-pnpm build
-pnpm lint
-pnpm typecheck    # tsc --noEmit
+npm install --legacy-peer-deps
+npm run dev       # :3000
+npm run build
+npm run lint
+npm run typecheck # tsc --noEmit
 ```
 
 Whole stack: `docker compose up` (uses root `.env`; copy from `.env.example`).
