@@ -36,5 +36,5 @@ class AnalysesRepo:
             "did_well": did_well,
             "llm_raw": json.dumps(llm_raw),
         }
-        res = self.db.table("analyses").insert(payload).execute()
+        res = self.db.table("analyses").upsert(payload, on_conflict="game_id").execute()
         return res.data[0]

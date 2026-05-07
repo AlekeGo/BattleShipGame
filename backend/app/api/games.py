@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.db.repositories.analyses import AnalysesRepo
 from app.db.repositories.games import GamesRepo
-from app.deps import get_analyses_repo, get_games_repo
+from app.deps import get_analyses_repo, get_auth_user, get_games_repo
 from app.engine.bots.hunt_bot import HuntBot
 from app.engine.bots.prob_bot import ProbBot
 from app.engine.bots.random_bot import RandomBot
@@ -97,6 +97,7 @@ def _build_bot_state(moves: list, player_ships: list[dict]) -> dict:
 async def create_game(
     payload: GameCreate,
     repo: GamesRepo = Depends(get_games_repo),
+    _auth_user=Depends(get_auth_user),
 ):
     bot_ships = [_ship_to_dict(s) for s in auto_place()]
     game = await repo.create(payload.user_id, payload.mode, bot_ships)

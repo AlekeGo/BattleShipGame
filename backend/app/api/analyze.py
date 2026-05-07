@@ -35,6 +35,11 @@ async def _run_analysis(
 ) -> CoachAnalysis | None:
     """Core analysis logic — shared by endpoint and precompute task."""
     try:
+        # Guard against concurrent callers (background task + explicit POST)
+        existing = await analyses_repo.get(game_id)
+        if existing:
+            return _row_to_analysis(existing)
+
         game = await games_repo.get(game_id)
         if not game or game["status"] != "finished":
             return None
