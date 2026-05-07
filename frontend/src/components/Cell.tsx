@@ -2,13 +2,13 @@
 
 export type CellState = "empty" | "ship" | "hit" | "miss" | "sunk" | "preview";
 
-const STATE_CLASSES: Record<CellState, string> = {
-  empty: "bg-slate-100 hover:bg-blue-200 cursor-pointer",
-  ship: "bg-blue-500",
-  hit: "bg-red-500 cursor-default",
-  miss: "bg-slate-300 cursor-default",
-  sunk: "bg-red-800 cursor-default",
-  preview: "bg-blue-300 cursor-pointer",
+const STATE_CLASS: Record<CellState, string> = {
+  empty: "",
+  ship: "ship",
+  hit: "hit",
+  miss: "miss",
+  sunk: "sunk",
+  preview: "target",
 };
 
 export default function Cell({
@@ -28,11 +28,15 @@ export default function Cell({
 }) {
   const disabled = state === "hit" || state === "miss" || state === "sunk";
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={disabled ? -1 : 0}
       onClick={disabled ? undefined : onClick}
       onMouseEnter={onHover}
+      onKeyDown={(e) => { if (!disabled && (e.key === "Enter" || e.key === " ")) onClick?.(); }}
       aria-label={`${owner} ${row},${col} ${state}`}
-      className={`h-8 w-8 border border-slate-200 transition-colors ${STATE_CLASSES[state]}`}
+      className={`cell${STATE_CLASS[state] ? ` ${STATE_CLASS[state]}` : ""}`}
+      style={{ cursor: disabled ? "default" : owner === "enemy" ? "crosshair" : "default" }}
     />
   );
 }

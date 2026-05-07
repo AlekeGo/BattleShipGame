@@ -1,11 +1,10 @@
 export default function FleetStatus({ ships }: { ships?: { name: string; sunk: boolean }[] }) {
+  const list = ships ?? [];
   return (
-    <ul className="space-y-1 text-sm">
-      {(ships ?? []).map((s) => (
-        <li key={s.name} className={s.sunk ? "line-through opacity-50" : ""}>
-          {s.name}
-        </li>
+    <div className="ships-remaining">
+      {list.map((s) => (
+        <span key={s.name} className={`pip${s.sunk ? " gone" : ""}`} title={s.name} />
       ))}
-    </ul>
+    </div>
   );
 }

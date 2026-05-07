@@ -4,47 +4,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { getOrCreateUserId } from "@/lib/user";
+import { AppHeader } from "@/components/AppHeader";
+import { RouteBar } from "@/components/RouteBar";
 
-type UserRecord = {
-  id: string;
-  display_name: string | null;
-  region: string | null;
-  email: string | null;
-};
+type UserRecord = { id: string; display_name: string | null; region: string | null; email: string | null };
+type ArchetypeEntry = { game_id: string; archetype: string | null; ended_at: string | null; won: boolean };
+type StatsData = { total_games: number; wins: number; win_rate: number; accuracy_pct: number; streak: number; archetypes: ArchetypeEntry[] };
 
-type ArchetypeEntry = {
-  game_id: string;
-  archetype: string | null;
-  ended_at: string | null;
-  won: boolean;
-};
-
-type StatsData = {
-  total_games: number;
-  wins: number;
-  win_rate: number;
-  accuracy_pct: number;
-  streak: number;
-  archetypes: ArchetypeEntry[];
-};
-
-function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
-  return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-5 flex flex-col gap-1">
-      <p className="text-xs uppercase tracking-wide opacity-50">{label}</p>
-      <p className="text-3xl font-bold">{value}</p>
-      {sub && <p className="text-sm opacity-60">{sub}</p>}
-    </div>
-  );
-}
-
-const ARCHETYPE_COLOR: Record<string, string> = {
-  "Random Shooter": "bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-100",
-  "Aggressive Hunter": "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-100",
-  "Methodical Planner": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100",
-  "Defensive Placer": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100",
-  "Pattern-Locked": "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100",
-};
+const REGIONS = ["Central Asia","Europe — West","Europe — East","North America","South America","Asia — East","Asia — South","Oceania","Africa"];
 
 export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
@@ -66,164 +33,164 @@ export default function ProfilePage() {
         setDisplayName(userRes.display_name ?? "");
         setRegion(userRes.region ?? "");
         setStats(statsRes);
-      } catch {
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
+      } catch { setError(true); } finally { setLoading(false); }
     });
   }, []);
 
   async function handleSave() {
-    setSaving(true);
-    setSaved(false);
-    setSaveError(false);
+    setSaving(true); setSaved(false); setSaveError(false);
     try {
       const uid = await getOrCreateUserId();
-      await api.patch(`/api/users/${uid}/profile`, {
-        display_name: displayName || null,
-        region: region || null,
-      });
+      await api.patch(`/api/users/${uid}/profile`, { display_name: displayName || null, region: region || null });
       setSaved(true);
-    } catch {
-      setSaveError(true);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  if (loading) {
-    return (
-      <main className="mx-auto max-w-3xl px-6 py-12 space-y-8">
-        <h1 className="text-3xl font-bold">Profile</h1>
-        <div className="animate-pulse space-y-4">
-          <div className="h-10 rounded bg-slate-100 dark:bg-slate-800" />
-          <div className="h-10 rounded bg-slate-100 dark:bg-slate-800" />
-          <div className="h-10 w-24 rounded bg-slate-100 dark:bg-slate-800" />
-        </div>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 animate-pulse">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-24 rounded-xl bg-slate-100 dark:bg-slate-800" />
-          ))}
-        </div>
-      </main>
-    );
-  }
-
-  if (error) {
-    return (
-      <main className="mx-auto max-w-3xl px-6 py-12">
-        <h1 className="text-3xl font-bold">Profile</h1>
-        <p className="mt-4 text-red-600">Could not load profile. Please try again.</p>
-      </main>
-    );
+    } catch { setSaveError(true); } finally { setSaving(false); }
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12 space-y-10">
-      <h1 className="text-3xl font-bold">Profile</h1>
+    <main className="page">
+      <AppHeader />
+      <RouteBar path="profile" label="identity + stats" />
 
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold">Your identity</h2>
-        <p className="text-sm opacity-60">
-          Set your display name and region to appear on the{" "}
-          <Link href="/leaderboard" className="underline">
-            leaderboard
-          </Link>
-          .
-        </p>
-        <div className="space-y-3">
+      {loading && (
+        <section className="two-col" style={{ paddingTop: 32 }}>
+          <div><div className="skeleton" style={{ height: 200 }} /></div>
           <div>
-            <label className="block text-sm font-medium mb-1">Display name</label>
-            <input
-              type="text"
-              maxLength={50}
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="e.g. Captain Almaty"
-              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            {[1,2,3,4].map(i => <div key={i} className="skeleton" style={{ marginBottom: 12 }} />)}
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Region</label>
-            <input
-              type="text"
-              maxLength={50}
-              value={region}
-              onChange={(e) => setRegion(e.target.value)}
-              placeholder="e.g. Almaty, KZ"
-              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {saving ? "Saving…" : "Save"}
-          </button>
-          {saved && <span className="text-sm text-green-600">Saved!</span>}
-          {saveError && <span className="text-sm text-red-600">Save failed. Try again.</span>}
-        </div>
-      </section>
+        </section>
+      )}
 
-      <section>
-        <h2 className="text-lg font-semibold mb-3">Your stats</h2>
-        {stats && stats.total_games > 0 ? (
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              <StatCard
-                label="Win rate"
-                value={`${stats.win_rate}%`}
-                sub={`${stats.wins} / ${stats.total_games} games`}
-              />
-              <StatCard label="Accuracy" value={`${stats.accuracy_pct}%`} sub="shots on target" />
-              <StatCard
-                label="Win streak"
-                value={String(stats.streak)}
-                sub={stats.streak === 1 ? "game" : "games"}
-              />
-              <StatCard label="Total games" value={String(stats.total_games)} />
+      {error && (
+        <section style={{ padding: "40px 100px" }}>
+          <div className="hd-card tilt-l">
+            <p className="hand" style={{ fontSize: 24, color: "var(--hit)" }}>Could not load profile. Please try again.</p>
+          </div>
+        </section>
+      )}
+
+      {!loading && !error && (
+        <>
+          <section className="profile-hero">
+            <div className="portrait">
+              <div className="corners" />
+              <div className="ph">◌<br />AVATAR<br />HERE</div>
+            </div>
+            <div>
+              <p className="section-eyebrow">CALL SIGN</p>
+              <h1>{displayName || "Commander"}</h1>
+              <p className="handle">@{displayName?.toLowerCase().replace(/\s+/g, "") || "anonymous"} · {region || "no region"}</p>
+              <div className="badges">
+                {stats?.archetypes?.[stats.archetypes.length - 1]?.archetype && (
+                  <span className="sticker">{stats.archetypes[stats.archetypes.length - 1].archetype}</span>
+                )}
+                <span className="mono" style={{ fontSize: 13, color: "var(--ink-soft)", letterSpacing: "1.5px" }}>
+                  // {stats?.total_games ?? 0} games · {stats?.wins ?? 0} W / {(stats?.total_games ?? 0) - (stats?.wins ?? 0)} L
+                </span>
+              </div>
+            </div>
+          </section>
+
+          <section className="two-col">
+            {/* LEFT: form */}
+            <div>
+              <p className="section-eyebrow" style={{ marginBottom: 10 }}>YOUR IDENTITY</p>
+              <div className="form-card">
+                <h3>EDIT PROFILE</h3>
+                <p className="help">Display name and region appear on the public leaderboard. A region is required to be ranked.</p>
+
+                <div className="field">
+                  <label>DISPLAY NAME</label>
+                  <input className="input" value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="e.g. AdmiralRustam" maxLength={50} />
+                </div>
+                <div className="field">
+                  <label>REGION <span className="mono" style={{ fontSize: 10, color: "var(--hit)" }}>· REQUIRED</span></label>
+                  <select className="input" value={region} onChange={e => setRegion(e.target.value)}>
+                    <option value="">— pick region —</option>
+                    {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </div>
+
+                <div className="row">
+                  <span className="saved-tag">
+                    {saved ? "✓ saved" : saveError ? "✗ save failed" : ""}
+                  </span>
+                  <button className="btn small" onClick={handleSave} disabled={saving}>
+                    {saving ? "Saving…" : "Save changes"}
+                  </button>
+                </div>
+              </div>
             </div>
 
-            {stats.archetypes.length > 0 && (
-              <div>
-                <h3 className="text-sm font-semibold mb-2">Archetype evolution (last 10 games)</h3>
-                <div className="flex flex-wrap gap-2">
-                  {stats.archetypes.map((entry) => (
-                    <Link
-                      key={entry.game_id}
-                      href={`/game/${entry.game_id}/review`}
-                      title={entry.ended_at ? new Date(entry.ended_at).toLocaleDateString() : ""}
-                      className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium transition-opacity hover:opacity-80 ${
-                        entry.archetype
-                          ? (ARCHETYPE_COLOR[entry.archetype] ?? "bg-slate-200 text-slate-800")
-                          : "bg-slate-100 text-slate-400 dark:bg-slate-800"
-                      }`}
-                    >
-                      <span
-                        className={`inline-block w-2 h-2 rounded-full ${entry.won ? "bg-green-500" : "bg-red-400"}`}
-                      />
-                      {entry.archetype ?? "Pending…"}
-                    </Link>
-                  ))}
+            {/* RIGHT: stats */}
+            <div>
+              <p className="section-eyebrow" style={{ marginBottom: 10 }}>YOUR STATS</p>
+
+              {stats && stats.total_games > 0 ? (
+                <>
+                  <div className="stats-summary">
+                    <div className="stat-tile">
+                      <p className="label">WIN RATE</p>
+                      <p className="num">{stats.win_rate}<small>%</small></p>
+                    </div>
+                    <div className="stat-tile">
+                      <p className="label">ACCURACY</p>
+                      <p className="num">{stats.accuracy_pct}<small>%</small></p>
+                    </div>
+                    <div className="stat-tile">
+                      <p className="label">WIN STREAK</p>
+                      <p className="num">{stats.streak}</p>
+                    </div>
+                    <div className="stat-tile">
+                      <p className="label">TOTAL GAMES</p>
+                      <p className="num">{stats.total_games}</p>
+                    </div>
+                  </div>
+
+                  {stats.archetypes.length > 0 && (
+                    <div className="archetype-section">
+                      <h3>Archetype evolution</h3>
+                      <p className="sub">LAST 10 GAMES · CLICK ANY PILL FOR THAT MATCH&apos;S COACH REPORT</p>
+                      <div className="arch-pills">
+                        {stats.archetypes.map((entry, i) => (
+                          <Link
+                            key={entry.game_id}
+                            href={`/game/${entry.game_id}/review`}
+                            className={`arch-pill${i === stats.archetypes.length - 1 ? " now" : ""}`}
+                          >
+                            {entry.archetype ?? "…"}
+                            <span className="when">#{i + 1}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <p className="section-eyebrow" style={{ marginTop: 24 }}>RECENT MATCHES</p>
+                  <ul className="recent-list">
+                    {stats.archetypes.slice(-4).reverse().map((entry) => (
+                      <Link key={entry.game_id} href={`/game/${entry.game_id}/review`}>
+                        <li>
+                          <span className="id">#{entry.game_id.slice(0, 6)}</span>
+                          <span>{entry.ended_at ? new Date(entry.ended_at).toLocaleDateString() : "—"}</span>
+                          <span className="arch">{entry.archetype ?? "—"}</span>
+                          <span className={`res ${entry.won ? "win" : "loss"}`}>{entry.won ? "W" : "L"}</span>
+                        </li>
+                      </Link>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <div className="hd-card tilt-r">
+                  <p className="hand" style={{ fontSize: 24, color: "var(--ink-dark)", margin: "0 0 8px" }}>No games yet.</p>
+                  <p className="body-hand" style={{ color: "var(--ink-soft)", margin: 0 }}>
+                    <Link href="/play" className="small-link">Play your first game →</Link>
+                  </p>
                 </div>
-                <p className="mt-2 text-xs opacity-40">Oldest → newest. Click any pill to see the Coach report.</p>
-              </div>
-            )}
-          </div>
-        ) : (
-          <p className="text-sm opacity-60">
-            No games yet.{" "}
-            <Link href="/play" className="underline">
-              Play your first game
-            </Link>{" "}
-            to see stats here.
-          </p>
-        )}
-      </section>
+              )}
+            </div>
+          </section>
+        </>
+      )}
     </main>
   );
 }

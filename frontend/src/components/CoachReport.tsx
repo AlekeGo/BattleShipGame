@@ -1,20 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
 import type { CoachAnalysis } from "@/lib/types";
 import { api } from "@/lib/api";
 
-function Skeleton({ lines = 2 }: { lines?: number }) {
+function SkeletonBlock() {
   return (
-    <div className="space-y-2 animate-pulse">
-      {Array.from({ length: lines }).map((_, i) => (
-        <div
-          key={i}
-          className="h-4 rounded bg-slate-200 dark:bg-slate-700"
-          style={{ width: i === lines - 1 ? "60%" : "100%" }}
-        />
-      ))}
+    <div>
+      <div className="skeleton" style={{ width: "100%" }} />
+      <div className="skeleton" style={{ width: "80%" }} />
+      <div className="skeleton" style={{ width: "60%" }} />
     </div>
   );
 }
@@ -32,57 +27,80 @@ export default function CoachReport({ gameId }: { gameId: string }) {
 
   if (error) {
     return (
-      <p className="mt-6 text-red-600">
-        Could not load coach analysis. Please try again later.
-      </p>
+      <div className="report-grid">
+        <div className="hd-card tilt-l" style={{ textAlign: "center", padding: "32px 24px" }}>
+          <p className="hand" style={{ fontSize: 28, color: "var(--hit)", margin: 0 }}>Coach is unavailable</p>
+          <p className="body-hand" style={{ fontSize: 16, color: "var(--ink-soft)", marginTop: 8 }}>Could not load analysis. Try again later.</p>
+        </div>
+      </div>
     );
   }
 
   if (!analysis) {
     return (
-      <div className="mt-6 space-y-8">
-        <section className="space-y-2">
-          <p className="text-sm uppercase opacity-60">Archetype</p>
-          <Skeleton lines={1} />
-        </section>
-        <section className="space-y-2">
-          <p className="text-sm uppercase opacity-60">Top mistake</p>
-          <Skeleton lines={2} />
-        </section>
-        <section className="space-y-2">
-          <p className="text-sm uppercase opacity-60">Tips</p>
-          <Skeleton lines={3} />
-        </section>
-        <section className="space-y-2">
-          <p className="text-sm uppercase opacity-60">What you did well</p>
-          <Skeleton lines={2} />
-        </section>
+      <div className="report-grid">
+        <div>
+          <p className="section-eyebrow" style={{ marginBottom: 8 }}>TOP MISTAKE</p>
+          <div className="top-mistake">
+            <h3>ANALYSING YOUR MOVES...</h3>
+            <SkeletonBlock />
+          </div>
+          <div className="one-win" style={{ marginTop: 22 }}>
+            <h4>ONE THING YOU DID WELL</h4>
+            <SkeletonBlock />
+          </div>
+        </div>
+        <div>
+          <div className="stats-card">
+            <h3>BEHAVIOURAL READOUT</h3>
+            <SkeletonBlock />
+          </div>
+          <p className="section-eyebrow" style={{ margin: "22px 0 10px" }}>3 TIPS, IN ORDER OF RETURN</p>
+          <div style={{ display: "grid", gap: 14 }}>
+            {[1, 2, 3].map((n) => (
+              <div key={n} className="tip">
+                <div className="num">{n}</div>
+                <SkeletonBlock />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="mt-6 space-y-6">
-      <section>
-        <p className="text-sm uppercase opacity-60">Archetype</p>
-        <p className="text-2xl font-semibold">{analysis.archetype}</p>
-      </section>
-      <section>
-        <p className="text-sm uppercase opacity-60">Top mistake</p>
-        <p>{analysis.top_mistake}</p>
-      </section>
-      <section>
-        <p className="text-sm uppercase opacity-60">Tips</p>
-        <ol className="list-decimal pl-5 space-y-1">
-          {analysis.tips.map((t, i) => (
-            <li key={i}>{t}</li>
+    <div className="report-grid">
+      <div>
+        <p className="section-eyebrow" style={{ marginBottom: 8 }}>TOP MISTAKE</p>
+        <div className="top-mistake">
+          <h3>THE ONE THING TO FIX</h3>
+          <p className="verdict">{analysis.top_mistake}</p>
+        </div>
+        <div className="one-win">
+          <h4>ONE THING YOU DID WELL</h4>
+          <p>{analysis.did_well}</p>
+        </div>
+      </div>
+      <div>
+        <div className="stats-card">
+          <h3>YOUR ARCHETYPE</h3>
+          <p className="hand" style={{ fontSize: 42, fontWeight: 700, color: "var(--ink)", margin: "8px 0 0", lineHeight: 1 }}>
+            {analysis.archetype}
+          </p>
+        </div>
+        <p className="section-eyebrow" style={{ margin: "22px 0 10px" }}>3 TIPS, IN ORDER OF RETURN</p>
+        <ol className="tips-list">
+          {analysis.tips.map((tip, i) => (
+            <li key={i} className="tip">
+              <div className="num">{i + 1}</div>
+              <div>
+                <p>{tip}</p>
+              </div>
+            </li>
           ))}
         </ol>
-      </section>
-      <section>
-        <p className="text-sm uppercase opacity-60">What you did well</p>
-        <p>{analysis.did_well}</p>
-      </section>
+      </div>
     </div>
   );
 }

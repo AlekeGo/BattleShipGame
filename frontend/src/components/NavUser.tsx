@@ -10,18 +10,28 @@ export function NavUser() {
 
   if (!user) {
     return (
-      <Link href="/login" className="text-sm text-blue-600 hover:underline">
+      <Link href="/login" className="small-link">
         Sign in
       </Link>
     );
   }
 
+  const initial = (user.email ?? "?")[0].toUpperCase();
+  const display = user.email ?? "user";
+
   return (
-    <div className="flex items-center gap-4">
-      <span className="max-w-[180px] truncate text-sm">{user.email}</span>
-      <button onClick={signOut} className="text-sm text-gray-500 hover:text-gray-800">
-        Sign out
+    <span className="user-chip" style={{ cursor: "default" }}>
+      <span className="avatar">{initial}</span>
+      <span style={{ maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        {display}
+      </span>
+      <button
+        onClick={signOut}
+        className="mono"
+        style={{ fontSize: 11, letterSpacing: "1.5px", color: "var(--ink-soft)", background: "none", border: "none", cursor: "pointer", marginLeft: 6 }}
+      >
+        out
       </button>
-    </div>
+    </span>
   );
 }

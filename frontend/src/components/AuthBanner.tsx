@@ -15,9 +15,24 @@ export function AuthBanner() {
   if (loading || user || !hasPlayed) return null;
 
   return (
-    <div className="flex items-center justify-between border-b bg-blue-50 px-6 py-2 text-sm">
-      <span>Sign in to save your stats across devices.</span>
-      <Link href="/login" className="ml-4 font-medium text-blue-600 hover:underline">
+    <div
+      className="mono"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "8px 56px 8px 100px",
+        borderBottom: "1px dashed rgba(46,31,158,0.3)",
+        fontSize: 11,
+        letterSpacing: "1.5px",
+        color: "var(--ink-soft)",
+        background: "var(--paper-2)",
+        position: "relative",
+        zIndex: 2,
+      }}
+    >
+      <span>// sign in to save your stats across devices</span>
+      <Link href="/login" style={{ color: "var(--hit)", textDecoration: "none" }}>
         Sign in →
       </Link>
     </div>
