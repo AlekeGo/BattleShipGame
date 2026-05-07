@@ -3,10 +3,11 @@ from supabase import Client
 
 from app.auth import verify_token
 from app.db.supabase import get_supabase
+from app.db.repositories.analyses import AnalysesRepo
 from app.db.repositories.users import UsersRepo
 from app.db.repositories.games import GamesRepo
 
-__all__ = ["get_supabase", "get_users_repo", "get_games_repo", "get_auth_user"]
+__all__ = ["get_supabase", "get_users_repo", "get_games_repo", "get_analyses_repo", "get_auth_user"]
 
 
 def get_users_repo(db: Client = Depends(get_supabase)) -> UsersRepo:
@@ -15,6 +16,10 @@ def get_users_repo(db: Client = Depends(get_supabase)) -> UsersRepo:
 
 def get_games_repo(db: Client = Depends(get_supabase)) -> GamesRepo:
     return GamesRepo(db)
+
+
+def get_analyses_repo(db: Client = Depends(get_supabase)) -> AnalysesRepo:
+    return AnalysesRepo(db)
 
 
 async def get_auth_user(
