@@ -1,10 +1,12 @@
+import asyncio
 import json
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from app.db.repositories.analyses import AnalysesRepo
 from app.db.repositories.games import GamesRepo
-from app.deps import get_games_repo
+from app.deps import get_analyses_repo, get_games_repo
 from app.engine.bots.hunt_bot import HuntBot
 from app.engine.bots.prob_bot import ProbBot
 from app.engine.bots.random_bot import RandomBot
@@ -20,6 +22,13 @@ from app.schemas.game import (
 from app.schemas.shot import BotMove, Coord, ShotRequest, ShotResult
 
 router = APIRouter()
+
+
+def _fire_analysis(game_id: str, games_repo: GamesRepo, analyses_repo: AnalysesRepo) -> None:
+    """Start coach analysis as a background task (fire-and-forget)."""
+    from app.api.analyze import _run_analysis  # local import avoids circular at module load
+
+    asyncio.create_task(_run_analysis(game_id, games_repo, analyses_repo))
 
 
 def _ship_to_dict(ship: Ship) -> dict:
@@ -140,6 +149,7 @@ async def shoot(
     game_id: str,
     payload: ShotRequest,
     repo: GamesRepo = Depends(get_games_repo),
+    analyses_repo: AnalysesRepo = Depends(get_analyses_repo),
 ):
     game = await repo.get(game_id)
     if not game:
@@ -189,6 +199,7 @@ async def shoot(
             winner="player",
             ended_at=datetime.now(timezone.utc).isoformat(),
         )
+        _fire_analysis(game_id, repo, analyses_repo)
         return ShotResult(result=p_result, sunk_ship=p_sunk_name, game_over=True, winner="player")
 
     # Hot-seat: no bot counter-move
@@ -237,6 +248,9 @@ async def shoot(
         update["winner"] = winner
         update["ended_at"] = datetime.now(timezone.utc).isoformat()
     await repo.update_state(game_id, **update)
+
+    if game_over:
+        _fire_analysis(game_id, repo, analyses_repo)
 
     return ShotResult(
         result=p_result,
