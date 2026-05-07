@@ -1,16 +1,14 @@
-import json
-
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from app.db.repositories.analyses import AnalysesRepo
 from app.db.repositories.games import GamesRepo
 from app.deps import get_analyses_repo, get_games_repo
+from app.utils import parse_json_field as _parse
 
 router = APIRouter()
 
-
-def _parse(raw) -> list | dict:
-    return raw if isinstance(raw, (list, dict)) else json.loads(raw)
+MAX_STATS_GAMES = 100
+MAX_PAGE_SIZE = 100
 
 
 def _accuracy_from_moves(moves: list) -> float:
@@ -27,7 +25,7 @@ async def get_stats(
     games_repo: GamesRepo = Depends(get_games_repo),
     analyses_repo: AnalysesRepo = Depends(get_analyses_repo),
 ):
-    all_games = await games_repo.list_for_user(user_id, limit=100)
+    all_games = await games_repo.list_for_user(user_id, limit=MAX_STATS_GAMES)
     finished = [g for g in all_games if g["status"] == "finished"]
 
     total = len(finished)
@@ -38,11 +36,9 @@ async def get_stats(
     all_moves: list = []
     for g in finished:
         all_moves.extend(_parse(g["moves"]))
-    player_shots = [m for m in all_moves if m["by"] == "player"]
-    hits = sum(1 for m in player_shots if m["result"] in ("hit", "sunk"))
-    accuracy_pct = round(100.0 * hits / len(player_shots), 1) if player_shots else 0.0
+    accuracy_pct = _accuracy_from_moves(all_moves)
 
-    # Win streak (from most recent)
+    # Win streak (from most recent, list is newest-first)
     streak = 0
     for g in finished:
         if g.get("winner") == "player":
@@ -50,18 +46,19 @@ async def get_stats(
         else:
             break
 
-    # Archetype evolution — last 10 finished games, oldest first
-    recent_10 = finished[:10]
-    archetypes: list[dict] = []
-    for g in recent_10:
-        row = await analyses_repo.get(g["id"])
-        archetypes.append({
+    # Archetype evolution — last 10 finished games, batch-fetched, oldest first
+    recent_10 = list(reversed(finished[:10]))
+    recent_ids = [g["id"] for g in recent_10]
+    analysis_map = await analyses_repo.get_batch(recent_ids)
+    archetypes = [
+        {
             "game_id": g["id"],
-            "archetype": row["archetype"] if row else None,
+            "archetype": analysis_map[g["id"]]["archetype"] if g["id"] in analysis_map else None,
             "ended_at": g.get("ended_at"),
             "won": g.get("winner") == "player",
-        })
-    archetypes.reverse()  # chronological order
+        }
+        for g in recent_10
+    ]
 
     return {
         "total_games": total,
@@ -76,30 +73,29 @@ async def get_stats(
 @router.get("/{user_id}/games")
 async def get_games(
     user_id: str,
-    limit: int = 20,
-    offset: int = 0,
+    limit: int = Query(default=20, ge=1, le=MAX_PAGE_SIZE),
+    offset: int = Query(default=0, ge=0),
     games_repo: GamesRepo = Depends(get_games_repo),
     analyses_repo: AnalysesRepo = Depends(get_analyses_repo),
 ):
     games = await games_repo.list_for_user(user_id, limit=limit, offset=offset)
+
+    # Batch-fetch analyses for all finished games in one query
+    finished_ids = [g["id"] for g in games if g["status"] == "finished"]
+    analysis_map = await analyses_repo.get_batch(finished_ids)
+
     result = []
     for g in games:
         moves = _parse(g["moves"])
         accuracy = _accuracy_from_moves(moves) if g["status"] == "finished" else None
-
-        archetype = None
-        if g["status"] == "finished":
-            row = await analyses_repo.get(g["id"])
-            if row:
-                archetype = row["archetype"]
-
+        row = analysis_map.get(g["id"])
         result.append({
             "game_id": g["id"],
             "mode": g["mode"],
             "status": g["status"],
             "winner": g.get("winner"),
             "accuracy_pct": accuracy,
-            "archetype": archetype,
+            "archetype": row["archetype"] if row else None,
             "started_at": g.get("started_at"),
             "ended_at": g.get("ended_at"),
         })

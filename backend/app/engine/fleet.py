@@ -36,8 +36,6 @@ class Ship:
 
 def validate_fleet(ships: list["Ship"]) -> None:
     """Raise ValueError if ships don't match FLEET_SPEC or have overlaps/OOB."""
-    spec_map = {name: size for name, size in FLEET_SPEC}
-
     if len(ships) != len(FLEET_SPEC):
         raise ValueError(f"Expected {len(FLEET_SPEC)} ships, got {len(ships)}")
 

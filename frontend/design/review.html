@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Coach Report · Match #028</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+  .report-hero {
+    padding: 36px 56px 24px 100px;
+    display: grid; grid-template-columns: 1fr auto;
+    gap: 32px; align-items: end;
+  }
+  @media (max-width:900px){ .report-hero { grid-template-columns: 1fr; padding: 24px 20px 20px 44px; } }
+  .verdict-bar {
+    display: flex; align-items: baseline; gap: 14px;
+    margin-bottom: 6px;
+  }
+  .report-hero h1 {
+    font-family: "Caveat", cursive; font-weight: 700;
+    font-size: 72px; line-height: 0.95; margin: 0;
+    color: var(--ink-dark);
+  }
+  .report-hero h1 .arch {
+    color: var(--ink); position: relative; display: inline-block;
+  }
+  .report-hero h1 .arch::after {
+    content: ""; position: absolute;
+    left: -4px; right: -4px; bottom: 6px; height: 6px;
+    background: var(--ink); opacity: 0.85;
+    transform: rotate(-0.5deg); border-radius: 2px;
+  }
+  .report-hero .meta {
+    font-family: "Special Elite", monospace; font-size: 12px;
+    letter-spacing: 1.5px; color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+  .result-stamp { transform: rotate(-4deg) translateY(-6px); }
+
+  .report-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 40px;
+    padding: 16px 56px 32px 100px;
+    align-items: start;
+  }
+  @media (max-width:900px){ .report-grid { grid-template-columns: 1fr; padding-left: 44px; padding-right: 20px; } }
+
+  .top-mistake {
+    background: var(--paper);
+    border: 2.5px solid var(--ink);
+    padding: 22px 24px 22px;
+    position: relative;
+    transform: rotate(-0.4deg);
+    box-shadow: 0 12px 24px rgba(20,9,74,0.18);
+  }
+  .top-mistake::before {
+    content: "";
+    position: absolute; top: -16px; left: 24px;
+    width: 110px; height: 26px;
+    background: rgba(220,200,90,0.55);
+    transform: rotate(-2deg);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  .top-mistake h3 {
+    font-family: "Special Elite", monospace; font-size: 13px;
+    letter-spacing: 2.5px; color: var(--hit); margin: 4px 0 14px;
+  }
+  .top-mistake .verdict {
+    font-family: "Caveat", cursive; font-size: 38px; line-height: 1.05;
+    color: var(--ink-dark); margin: 0 0 14px;
+  }
+  .top-mistake .verdict .hl {
+    background: linear-gradient(transparent 55%, rgba(255,220,80,0.6) 55%);
+    padding: 0 4px;
+  }
+  .top-mistake .quote {
+    padding: 14px 16px;
+    background: rgba(243,236,215,0.5);
+    border-left: 4px solid var(--hit);
+    font-family: "Kalam", cursive; font-size: 17px;
+    line-height: 1.45; color: var(--ink-dark);
+  }
+  .top-mistake .quote::before {
+    content: "\201C"; font-family: "Caveat", cursive;
+    color: var(--hit); font-size: 36px; line-height: 0;
+    position: relative; top: 8px; margin-right: 4px;
+  }
+
+  .stats-card {
+    background: var(--paper-2);
+    border: 2.5px solid var(--ink);
+    padding: 22px 24px;
+    transform: rotate(0.3deg);
+  }
+  .stats-card h3 {
+    font-family: "Special Elite", monospace;
+    font-size: 12px; letter-spacing: 2.5px;
+    color: var(--ink-soft); margin: 0 0 14px;
+  }
+  .stat-row {
+    display: grid; grid-template-columns: 1fr auto;
+    align-items: baseline; gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px dashed rgba(46,31,158,0.3);
+    font-family: "Special Elite", monospace; font-size: 13px;
+    color: var(--ink-dark);
+  }
+  .stat-row:last-of-type { border-bottom: none; }
+  .stat-row .val {
+    font-family: "Caveat", cursive; font-size: 26px;
+    color: var(--ink); font-weight: 700;
+  }
+  .stat-row .val.bad { color: var(--hit); }
+  .stat-row .val.good { color: var(--green); }
+  .stat-row .bar {
+    grid-column: 1 / -1;
+    height: 6px; margin-top: -2px;
+    background: rgba(46,31,158,0.12);
+    position: relative;
+  }
+  .stat-row .bar > i {
+    position: absolute; left: 0; top: 0; bottom: 0;
+    background: var(--ink); display: block;
+  }
+  .stat-row .bar > i.bad { background: var(--hit); }
+  .stat-row .bar > i.good { background: var(--green); }
+
+  .tips-list {
+    list-style: none; padding: 0; margin: 0;
+    display: grid; gap: 14px;
+  }
+  .tip {
+    display: grid;
+    grid-template-columns: 48px 1fr;
+    gap: 14px;
+    padding: 14px 16px;
+    background: var(--paper);
+    border: 2.5px solid var(--ink);
+    position: relative;
+  }
+  .tip:nth-child(1) { transform: rotate(-0.4deg); }
+  .tip:nth-child(2) { transform: rotate(0.3deg); }
+  .tip:nth-child(3) { transform: rotate(-0.2deg); }
+  .tip .num {
+    font-family: "Caveat", cursive; font-weight: 700;
+    font-size: 48px; line-height: 0.85;
+    color: var(--hit);
+  }
+  .tip h4 {
+    font-family: "Caveat", cursive; font-weight: 700;
+    font-size: 26px; line-height: 1.05;
+    color: var(--ink-dark); margin: 0 0 6px;
+  }
+  .tip p {
+    font-family: "Kalam", cursive; font-size: 16px;
+    line-height: 1.45; color: var(--ink-dark); margin: 0;
+  }
+  .tip .cite {
+    margin-top: 8px;
+    font-family: "Special Elite", monospace; font-size: 11px;
+    color: var(--ink-soft); letter-spacing: 1px;
+  }
+  .tip .cite::before { content: "→ cited from "; }
+
+  .one-win {
+    background: var(--green);
+    color: var(--paper);
+    padding: 22px 24px;
+    margin-top: 22px;
+    border: 2.5px solid var(--ink);
+    box-shadow: 4px 5px 0 var(--ink-dark);
+    transform: rotate(-0.5deg);
+  }
+  .one-win h4 {
+    font-family: "Special Elite", monospace; font-size: 12px;
+    letter-spacing: 2.5px; margin: 0 0 10px; color: var(--paper);
+    opacity: 0.9;
+  }
+  .one-win p {
+    font-family: "Caveat", cursive; font-size: 28px;
+    line-height: 1.1; margin: 0;
+    color: var(--paper);
+  }
+
+  .archetype-bar {
+    padding: 28px 56px 32px 100px;
+    border-top: 2px dashed rgba(46,31,158,0.35);
+  }
+  @media (max-width:900px){ .archetype-bar { padding-left: 44px; padding-right: 20px; } }
+  .arch-pills {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-top: 14px;
+  }
+  .arch-pill {
+    padding: 6px 14px;
+    border: 2.5px solid var(--ink);
+    background: var(--paper);
+    font-family: "Caveat", cursive; font-weight: 700;
+    font-size: 18px; color: var(--ink-dark);
+    text-decoration: none;
+    box-shadow: 1.5px 2px 0 rgba(20,9,74,0.2);
+  }
+  .arch-pill .when {
+    display: block;
+    font-family: "Special Elite", monospace; font-size: 9px;
+    letter-spacing: 1.5px; color: var(--ink-soft); font-weight: 400;
+  }
+  .arch-pill.now { background: var(--hit); color: #fff7e8; border-color: var(--hit); }
+  .arch-pill.now .when { color: rgba(255,255,255,0.8); }
+  .arch-pill.shift { transform: rotate(-1deg); }
+
+  .actions { display: flex; gap: 14px; margin-top: 18px; flex-wrap: wrap; }
+
+  .skeleton {
+    height: 14px; background: rgba(46,31,158,0.12);
+    margin: 6px 0; border-radius: 2px;
+    animation: shimmer 1.6s infinite linear;
+  }
+  @keyframes shimmer { 0%{opacity:0.4;} 50%{opacity:0.8;} 100%{opacity:0.4;} }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <filter id="rough"><feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="2.2"/></filter>
+</defs></svg>
+
+<main class="page" data-screen-label="game / review">
+  <header class="app-header">
+    <a href="index.html" class="wordmark">
+      <svg class="anchor" viewBox="0 0 32 32" aria-hidden="true">
+        <g fill="none" stroke="#2e1f9e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" filter="url(#rough)">
+          <circle cx="16" cy="6" r="3"/><line x1="16" y1="9" x2="16" y2="27"/>
+          <line x1="11" y1="13" x2="21" y2="13"/><path d="M6 22 Q16 30 26 22"/>
+        </g>
+      </svg>
+      Ocean Strike
+    </a>
+    <nav class="right">
+      <a href="play.html">New game</a>
+      <a href="profile.html" class="user-chip"><span class="avatar">A</span> asadullo</a>
+    </nav>
+  </header>
+
+  <div class="route-bar">
+    <span><span style="opacity:0.5">~/</span><span class="route">game/8f2c-a4d1/review</span> &nbsp;·&nbsp; coach report</span>
+    <span>generated in 2.4s · Claude Haiku 4.5</span>
+  </div>
+
+  <section class="report-hero">
+    <div>
+      <p class="meta">POST-GAME REPORT · MATCH #028 · vs MEDIUM BOT · 23 turns · 6m 12s</p>
+      <div class="verdict-bar">
+        <span class="stamp green tilt result-stamp">VICTORY</span>
+        <span class="mono" style="font-size:13px;color:var(--ink-soft);letter-spacing:1.5px;">17 / 23 shots landed · 73.9% accuracy</span>
+      </div>
+      <h1>You played like a <span class="arch">methodical hunter</span> —<br/>but you flinched after every hit.</h1>
+    </div>
+    <div style="display:flex; flex-direction:column; align-items:flex-end; gap: 8px;">
+      <span class="sticker">ARCHETYPE</span>
+      <div class="hand" style="font-size:42px;font-weight:700;color:var(--ink);line-height:1;">Hunter</div>
+      <span class="mono" style="font-size:11px;color:var(--ink-soft);letter-spacing:1.5px;">↑ from Sniper · 4-game shift</span>
+    </div>
+  </section>
+
+  <section class="report-grid">
+    <!-- LEFT column -->
+    <div>
+      <p class="section-eyebrow" style="margin-bottom:8px;">TOP MISTAKE</p>
+      <div class="top-mistake">
+        <h3>THE ONE THING TO FIX</h3>
+        <p class="verdict">You hit, then you <span class="hl">fled</span>.</p>
+        <p class="body-hand" style="font-size:17px;line-height:1.5;color:var(--ink-dark);margin:0 0 14px;">
+          Your <span class="mono" style="font-size:14px;background:rgba(46,31,158,0.08);padding:1px 5px;border:1px solid rgba(46,31,158,0.25);">post-hit follow-through</span>
+          was 38%. That means in 3 of every 5 turns where you found a ship, your <em>next</em> shot
+          was somewhere completely else. You let the bot rebuild every time.
+        </p>
+        <div class="quote">
+          On turn 12 you hit D2 — a real, meaty hit. Your next shot was G7, halfway across the
+          board. The ship at D was 3 cells long; you eventually found it on turn 19. That's
+          7 wasted turns chasing nothing.
+        </div>
+      </div>
+
+      <div class="one-win">
+        <h4>ONE THING YOU DID WELL</h4>
+        <p>Your placement entropy was 0.84. The bot wasted 11 shots in dead water before its first hit. You hide ships better than 78% of players.</p>
+      </div>
+    </div>
+
+    <!-- RIGHT column: stats + tips -->
+    <div>
+      <div class="stats-card">
+        <h3>BEHAVIORAL READOUT</h3>
+        <div class="stat-row">
+          <span>shot entropy</span>
+          <span class="val good">0.81 <small style="font-family:'Special Elite',monospace;font-size:10px;opacity:0.6;">/1.0</small></span>
+          <div class="bar"><i class="good" style="width:81%"></i></div>
+        </div>
+        <div class="stat-row">
+          <span>parity discipline</span>
+          <span class="val good">94%</span>
+          <div class="bar"><i class="good" style="width:94%"></i></div>
+        </div>
+        <div class="stat-row">
+          <span>post-hit follow-through</span>
+          <span class="val bad">38%</span>
+          <div class="bar"><i class="bad" style="width:38%"></i></div>
+        </div>
+        <div class="stat-row">
+          <span>placement entropy</span>
+          <span class="val good">0.84</span>
+          <div class="bar"><i class="good" style="width:84%"></i></div>
+        </div>
+        <div class="stat-row">
+          <span>avg. shot interval</span>
+          <span class="val">11.2s</span>
+        </div>
+        <div class="stat-row">
+          <span>wasted shots</span>
+          <span class="val bad">6</span>
+        </div>
+      </div>
+
+      <p class="section-eyebrow" style="margin: 22px 0 10px;">3 TIPS, IN ORDER OF RETURN</p>
+      <ol class="tips-list">
+        <li class="tip">
+          <div class="num">1</div>
+          <div>
+            <h4>Commit to the kill.</h4>
+            <p>After a hit, your next shot should be one of the four neighbors. No exceptions until the ship is sunk or the line is exhausted.</p>
+            <p class="cite">turns 12 → 13, 18 → 19</p>
+          </div>
+        </li>
+        <li class="tip">
+          <div class="num">2</div>
+          <div>
+            <h4>Stop firing at row J.</h4>
+            <p>You opened 4 of your last 5 games with a J-row shot. The bot has noticed. Vary your opener — try the C-G band where most ships actually live.</p>
+            <p class="cite">turns 1 of matches 24, 25, 26, 28</p>
+          </div>
+        </li>
+        <li class="tip">
+          <div class="num">3</div>
+          <div>
+            <h4>Use the parity instinct you already have.</h4>
+            <p>You're a 94% parity shooter — naturally. Lean into it. After sinking the 2-cell, switch to dense parity to flush the next ship faster.</p>
+            <p class="cite">parity discipline · 94%</p>
+          </div>
+        </li>
+      </ol>
+
+      <div class="actions">
+        <a href="play.html" class="btn">Play another →</a>
+        <a href="game.html" class="btn ghost">Replay this match</a>
+        <a href="profile.html" class="btn ghost">See all reports</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="archetype-bar">
+    <p class="section-eyebrow">ARCHETYPE EVOLUTION · LAST 10 GAMES</p>
+    <h2 class="hand" style="font-size:36px;line-height:1;color:var(--ink-dark);margin:6px 0 0;">You're becoming a <span style="color:var(--ink);">Hunter</span>.</h2>
+    <div class="arch-pills">
+      <a href="#" class="arch-pill">Sniper<span class="when">#019</span></a>
+      <a href="#" class="arch-pill">Sniper<span class="when">#020</span></a>
+      <a href="#" class="arch-pill">Sniper<span class="when">#021</span></a>
+      <a href="#" class="arch-pill shift">Sniper→Hunter<span class="when">#022</span></a>
+      <a href="#" class="arch-pill">Hunter<span class="when">#023</span></a>
+      <a href="#" class="arch-pill">Hunter<span class="when">#024</span></a>
+      <a href="#" class="arch-pill">Hunter<span class="when">#025</span></a>
+      <a href="#" class="arch-pill">Hunter<span class="when">#026</span></a>
+      <a href="#" class="arch-pill">Hunter<span class="when">#027</span></a>
+      <a href="#" class="arch-pill now">Hunter<span class="when">#028 · NOW</span></a>
+    </div>
+  </section>
+</main>
+
+<div style="height:32px;"></div>
+</body>
+</html>

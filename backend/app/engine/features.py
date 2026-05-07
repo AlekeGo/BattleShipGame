@@ -2,6 +2,7 @@
 import math
 
 BOARD_SIZE = 10
+FOLLOW_THROUGH_WINDOW = 4
 
 
 def _is_adjacent(r1: int, c1: int, r2: int, c2: int) -> bool:
@@ -30,7 +31,7 @@ def extract_features(moves: list[dict], player_ships: list[dict], bot_difficulty
     Returns a dict with keys:
       total_shots, accuracy_pct, parity_adherence, post_hit_followthrough,
       shot_entropy, wasted_shots_after_sink, placement_corners, placement_edges,
-      avg_time_per_shot, bot_difficulty, outcome
+      avg_time_per_shot
     """
     player_moves = [m for m in moves if m["by"] == "player"]
     total_shots = len(player_moves)
@@ -63,13 +64,12 @@ def extract_features(moves: list[dict], player_ships: list[dict], bot_difficulty
                 shot_entropy -= p * math.log2(p)
     shot_entropy = round(shot_entropy, 4)
 
-    # post_hit_followthrough — after a hit, % of next ≤4 player shots adjacent to that hit
-    follow_window = 4
+    # post_hit_followthrough — after a hit, % of next ≤N player shots adjacent to that hit
     followthrough_checks: list[bool] = []
     for i, m in enumerate(player_moves):
         if m["result"] == "hit":
             hr, hc = m["coord"]
-            subsequent = player_moves[i + 1 : i + 1 + follow_window]
+            subsequent = player_moves[i + 1 : i + 1 + FOLLOW_THROUGH_WINDOW]
             for s in subsequent:
                 followthrough_checks.append(_is_adjacent(hr, hc, s["coord"][0], s["coord"][1]))
     post_hit_followthrough = (

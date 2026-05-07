@@ -1,11 +1,11 @@
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Coord(BaseModel):
-    row: int
-    col: int
+    row: int = Field(ge=0, le=9)
+    col: int = Field(ge=0, le=9)
 
 
 class ShotRequest(BaseModel):

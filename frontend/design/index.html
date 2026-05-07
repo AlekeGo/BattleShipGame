@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ocean Strike — the only Battleship that makes you better at Battleship</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Kalam:wght@400;700&family=Special+Elite&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f3ecd7;
+    --paper-2: #ece2c5;
+    --grid-line: rgba(86, 130, 196, 0.45);
+    --grid-line-strong: rgba(86, 130, 196, 0.7);
+    --ink: #2e1f9e;
+    --ink-dark: #14094a;
+    --ink-soft: #4a3ec9;
+    --hit: #c81f2c;
+    --hit-soft: #b2202c;
+    --green: #4a9b34;
+    --wood: #5a3a22;
+    --wood-2: #3e2614;
+    --wood-3: #6a4628;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background:
+      radial-gradient(ellipse at 50% 0%, #6a4628 0%, #3e2614 60%, #2a1808 100%);
+    background-attachment: fixed;
+    font-family: "Kalam", "Caveat", cursive;
+    color: var(--ink-dark);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Wood-grain texture overlay on body */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background:
+      repeating-linear-gradient(92deg,
+        rgba(0,0,0,0.06) 0 2px, transparent 2px 7px),
+      repeating-linear-gradient(88deg,
+        rgba(255,220,170,0.04) 0 1px, transparent 1px 23px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* === The Notebook Page === */
+  .page {
+    position: relative;
+    max-width: 1200px;
+    margin: 32px auto;
+    background: var(--paper);
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(var(--grid-line-strong) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line-strong) 1px, transparent 1px);
+    background-size: 24px 24px, 24px 24px, 120px 120px, 120px 120px;
+    background-position: 0 0;
+    box-shadow:
+      0 30px 60px rgba(0,0,0,0.55),
+      0 8px 18px rgba(0,0,0,0.4),
+      inset 0 0 0 1px rgba(0,0,0,0.05);
+    z-index: 1;
+  }
+
+  /* Red margin line, classic notebook */
+  .page::before {
+    content: "";
+    position: absolute;
+    left: 76px;
+    top: 0; bottom: 0;
+    width: 1.5px;
+    background: rgba(200, 31, 44, 0.45);
+    z-index: 1;
+  }
+
+  /* Paper texture / ink-bleed feel */
+  .page::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(255,250,220,0.5), transparent 60%),
+      radial-gradient(ellipse at 80% 90%, rgba(140,100,50,0.18), transparent 70%);
+    mix-blend-mode: multiply;
+  }
+
+  .page > * { position: relative; z-index: 2; }
+
+  /* === Top header strip === */
+  .top-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px 56px 18px 100px;
+    border-bottom: 2.5px solid var(--ink-soft);
+    border-bottom-style: solid;
+    position: relative;
+  }
+  .top-strip::after {
+    content: "";
+    position: absolute;
+    left: 100px; right: 56px;
+    bottom: -7px;
+    height: 1.5px;
+    background: var(--ink-soft);
+    opacity: 0.55;
+  }
+
+  .wordmark {
+    font-family: "Caveat", cursive;
+    font-weight: 700;
+    font-size: 36px;
+    color: var(--ink);
+    letter-spacing: 0.5px;
+    line-height: 1;
+    transform: rotate(-1.5deg);
+  }
+  .wordmark .anchor {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    margin-right: 6px;
+    vertical-align: -5px;
+  }
+
+  .nav {
+    display: flex;
+    gap: 28px;
+    align-items: center;
+    font-family: "Kalam", cursive;
+    font-size: 18px;
+    color: var(--ink);
+  }
+  .nav a {
+    color: var(--ink);
+    text-decoration: none;
+    padding: 4px 2px;
+    position: relative;
+  }
+  .nav a:hover { color: var(--hit); }
+  .nav a:hover::after {
+    content: "";
+    position: absolute;
+    left: -2px; right: -2px; bottom: -2px;
+    height: 2px;
+    background: var(--hit);
+    border-radius: 2px;
+    transform: rotate(-0.8deg);
+  }
+
+  .btn {
+    display: inline-block;
+    font-family: "Kalam", cursive;
+    font-weight: 700;
+    background: var(--hit);
+    color: #fff7e8;
+    padding: 10px 22px;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    text-decoration: none;
+    box-shadow: 2px 3px 0 var(--ink-dark);
+    transform: rotate(-0.6deg);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn:hover {
+    transform: rotate(-0.6deg) translate(-1px, -1px);
+    box-shadow: 3px 4px 0 var(--ink-dark);
+  }
+  .btn:active {
+    transform: rotate(-0.6deg) translate(2px, 2px);
+    box-shadow: 0 0 0 var(--ink-dark);
+  }
+  .btn.ghost {
+    background: transparent;
+    color: var(--ink);
+    border: 2px solid var(--ink);
+    box-shadow: 2px 3px 0 var(--ink-soft);
+  }
+
+  /* === Hero === */
+  .hero {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: 40px;
+    padding: 56px 56px 40px 100px;
+    align-items: center;
+  }
+
+  .hero h1 {
+    font-family: "Caveat", cursive;
+    font-weight: 700;
+    font-size: clamp(48px, 6.2vw, 88px);
+    line-height: 0.95;
+    color: var(--ink-dark);
+    margin: 0 0 18px;
+    letter-spacing: -0.5px;
+  }
+  .hero h1 .ink-strike { color: var(--ink); }
+  .hero h1 .red-strike {
+    color: var(--hit);
+    position: relative;
+    display: inline-block;
+  }
+  .hero h1 .red-strike::after {
+    content: "";
+    position: absolute;
+    left: -4px; right: -4px;
+    top: 58%;
+    height: 4px;
+    background: var(--hit);
+    transform: rotate(-1.5deg);
+    opacity: 0.85;
+  }
+
+  .hero .tagline {
+    font-family: "Kalam", cursive;
+    font-size: 22px;
+    color: var(--ink-dark);
+    line-height: 1.45;
+    margin: 0 0 28px;
+    max-width: 520px;
+  }
+  .hero .tagline em {
+    font-style: normal;
+    background: linear-gradient(transparent 60%, rgba(255,220,80,0.5) 60%);
+    padding: 0 4px;
+  }
+
+  .cta-row {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .meta-note {
+    font-family: "Special Elite", "JetBrains Mono", monospace;
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-left: 6px;
+  }
+  .meta-note::before { content: "// "; opacity: 0.6; }
+
+  /* Hero board */
+  .hero-board-wrap {
+    position: relative;
+    transform: rotate(1.2deg);
+  }
+  .hero-board-wrap .stamp {
+    position: absolute;
+    top: -28px; right: -10px;
+    font-family: "Special Elite", monospace;
+    color: var(--hit);
+    border: 2.5px solid var(--hit);
+    padding: 6px 14px;
+    font-size: 13px;
+    letter-spacing: 2px;
+    transform: rotate(8deg);
+    background: rgba(243, 236, 215, 0.6);
+    z-index: 5;
+  }
+  .hero-board-wrap .stamp::before {
+    content: "";
+    position: absolute;
+    inset: -3px;
+    border: 1.5px solid var(--hit);
+    opacity: 0.4;
+  }
+
+  /* === Hand-drawn rectangle (SVG-driven) === */
+  .hd-frame {
+    position: relative;
+    padding: 18px;
+  }
+  .hd-frame > svg.frame {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  /* === Game grid === */
+  .grid-board {
+    --cell: 38px;
+    display: inline-grid;
+    grid-template-columns: 22px repeat(10, var(--cell));
+    grid-template-rows: 22px repeat(10, var(--cell));
+    gap: 0;
+    font-family: "Caveat", cursive;
+    color: var(--ink);
+    user-select: none;
+  }
+  .grid-board .corner { }
+  .grid-board .col-h, .grid-board .row-h {
+    font-size: 18px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink);
+  }
+  .grid-board .cell {
+    border: 1px solid var(--grid-line-strong);
+    position: relative;
+    cursor: crosshair;
+    transition: background 0.1s;
+  }
+  .grid-board .cell:hover {
+    background: rgba(46, 31, 158, 0.08);
+  }
+  .grid-board .cell.miss::after {
+    content: "";
+    position: absolute;
+    inset: 6px;
+    background: repeating-linear-gradient(
+      135deg,
+      var(--ink) 0 1.5px,
+      transparent 1.5px 5px
+    );
+    opacity: 0.55;
+  }
+  .grid-board .cell.hit::after {
+    content: "✗";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--hit);
+    font-family: "Caveat", cursive;
+    font-weight: 700;
+    font-size: 32px;
+    line-height: 1;
+  }
+  .grid-board .cell.sunk::after {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    background: repeating-linear-gradient(
+      135deg,
+      var(--hit) 0 2px,
+      transparent 2px 6px
+    );
+    opacity: 0.7;
+  }
+  .grid-board .cell.sunk::before {
+    content: "✗";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--hit);
+    font-family: "Caveat", cursive;
+    font-weight: 700;
+    font-size: 30px;
+    line-height: 1;
+    z-index: 2;
+  }
+
+  /* Coach callout pinned to grid */
+  .coach-callout {
+    position: absolute;
+    background: var(--paper);
+    border: 2.5px solid var(--ink);
+    padding: 10px 14px;
+    font-family: "Special Elite", monospace;
+    font-size: 12.5px;
+    color: var(--ink-dark);
+    line-height: 1.4;
+    max-width: 220px;
+    box-shadow: 3px 4px 0 rgba(20,9,74,0.15);
+    transform: rotate(-2deg);
+    z-index: 4;
+  }
+  .coach-callout::before {
+    content: "COACH →";
+    display: block;
+    color: var(--hit);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    margin-bottom: 4px;
+  }
+  .coach-callout.bottom-left {
+    bottom: -30px;
+    left: -20px;
+  }
+  .coach-callout svg.arrow {
+    position: absolute;
+    width: 70px;
+    height: 50px;
+    pointer-events: none;
+  }
+
+  /* === Section heading style === */
+  .section {
+    padding: 50px 56px 50px 100px;
+    border-top: 2px dashed rgba(46,31,158,0.35);
+    position: relative;
+  }
+  .section-eyebrow {
+    font-family: "Special Elite", monospace;
+    font-size: 12px;
+    color: var(--hit);
+    letter-spacing: 3px;
+    margin: 0 0 6px;
+  }
+  .section-eyebrow::before { content: "§ "; }
+  .section h2 {
+    font-family: "Caveat", cursive;
+    font-weight: 700;
+    font-size: 56px;
+    line-height: 1;
+    color: var(--ink-dark);
+    margin: 0 0 28px;
+    letter-spacing: -0.3px;
+  }
+  .section h2 .underline {
+    position: relative;
+    display: inline-block;
+  }
+  .section h2 .underline::after {
+    content: "";
+    position: absolute;
+    left: -4px; right: -4px;
+    bottom: 4px;
+    height: 6px;
+    background: var(--ink);
+    opacity: 0.85;
+    transform: rotate(-0.5deg);
+    border-radius: 2px;
+  }
+
+  /* === Coach card section === */
+  .coach-section {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    gap: 48px;
+    align-items: start;
+  }
+
+  .coach-card {
+    background: var(--paper-2);
+    padding: 26px 28px;
+    position: relative;
+    transform: rotate(-0.4deg);
+    box-shadow:
+      0 12px 24px rgba(20,9,74,0.18),
+      0 2px 4px rgba(0,0,0,0.1);
+  }
+  .coach-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: 2.5px solid var(--ink);
+    pointer-events: none;
+  }
+  .coach-card .tape {
+    position: absolute;
+    top: -18px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-2deg);
+    width: 100px;
+    height: 28px;
+    background: rgba(220, 200, 90, 0.55);
+    border-left: 1px dashed rgba(0,0,0,0.15);
+    border-right: 1px dashed rgba(0,0,0,0.15);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  .coach-card h3 {
+    font-family: "Special Elite", monospace;
+    font-size: 14px;
+    color: var(--hit);
+    letter-spacing: 2px;
+    margin: 4px 0 14px;
+  }
+  .coach-card .verdict {
+    font-family: "Caveat", cursive;
+    font-size: 36px;
+    line-height: 1.05;
+    color: var(--ink-dark);
+    margin: 0 0 18px;
+  }
+  .coach-card .verdict .hl {
+    background: linear-gradient(transparent 55%, rgba(255,220,80,0.6) 55%);
+    padding: 0 4px;
+  }
+  .coach-card .stat-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: baseline;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px dashed rgba(46,31,158,0.3);
+    font-family: "Special Elite", monospace;
+    font-size: 13px;
+    color: var(--ink-dark);
+  }
+  .coach-card .stat-row:last-of-type { border-bottom: none; }
+  .coach-card .stat-row .val {
+    font-family: "Caveat", cursive;
+    font-size: 24px;
+    color: var(--ink);
+    font-weight: 700;
+  }
+  .coach-card .stat-row .val.bad { color: var(--hit); }
+  .coach-card .stat-row .val.good { color: var(--green); }
+  .coach-card .quote {
+    margin-top: 18px;
+    padding: 14px 16px;
+    background: rgba(243, 236, 215, 0.55);
+    border-left: 4px solid var(--hit);
+    font-family: "Kalam", cursive;
+    font-size: 17px;
+    line-height: 1.45;
+    color: var(--ink-dark);
+  }
+  .coach-card .quote::before {
+    content: "\201C";
+    font-family: "Caveat", cursive;
+    color: var(--hit);
+    font-size: 36px;
+    line-height: 0;
+    position: relative;
+    top: 8px;
+    margin-right: 4px;
+  }
+
+  .coach-copy h2 { margin-bottom: 18px; }
+  .coach-copy p {
+    font-family: "Kalam", cursive;
+    font-size: 19px;
+    line-height: 1.55;
+    color: var(--ink-dark);
+    margin: 0 0 16px;
+    max-width: 480px;
+  }
+  .coach-copy .term {
+    font-family: "Special Elite", monospace;
+    font-size: 16px;
+    background: rgba(46,31,158,0.08);
+    padding: 1px 6px;
+    border: 1px solid rgba(46,31,158,0.25);
+  }
+
+  /* === Differentiator triplets === */
+  .diff-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+  }
+  .diff-card {
+    position: relative;
+    padding: 26px 24px 28px;
+    background: var(--paper);
+  }
+  .diff-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: 2.5px solid var(--ink);
+    pointer-events: none;
+  }
+  .diff-card:nth-child(1) { transform: rotate(-0.8deg); }
+  .diff-card:nth-child(2) { transform: rotate(0.5deg); }
+  .diff-card:nth-child(3) { transform: rotate(-0.3deg); }
+
+  .diff-card .num {
+    font-family: "Caveat", cursive;
+    font-weight: 700;
+    font-size: 56px;
+    color: var(--hit);
+    line-height: 0.9;
+    margin: 0 0 6px;
+  }
+  .diff-card h4 {
+    font-family: "Caveat", cursive;
+    font-size: 30px;
+    line-height: 1;
+    color: var(--ink-dark);
+    margin: 0 0 12px;
+  }
+  .diff-card p {
+    font-family: "Kalam", cursive;
+    font-size: 17px;
+    line-height: 1.5;
+    color: var(--ink-dark);
+    margin: 0;
+  }
+  .diff-card .icon-area {
+    width: 100%;
+    height: 64px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  /* Mini-grid icons */
+  .mini-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 12px);
+    grid-template-rows: repeat(4, 12px);
+    gap: 0;
+  }
+  .mini-grid div {
+    border: 1px solid rgba(46,31,158,0.35);
+  }
+  .mini-grid div.x {
+    background: repeating-linear-gradient(135deg, var(--ink) 0 1px, transparent 1px 3px);
+    opacity: 0.6;
+  }
+  .mini-grid div.r {
+    background: repeating-linear-gradient(135deg, var(--hit) 0 1.5px, transparent 1.5px 4px);
+  }
+
+  /* === Roadmap timeline === */
+  .roadmap {
+    position: relative;
+    padding-top: 20px;
+  }
+  .roadmap-track {
+    position: relative;
+    margin: 32px 0 12px;
+    padding: 20px 0;
+  }
+  .roadmap-track::before {
+    content: "";
+    position: absolute;
+    left: 4%; right: 4%;
+    top: 50%;
+    height: 3px;
+    background:
+      repeating-linear-gradient(90deg,
+        var(--ink) 0 12px,
+        transparent 12px 18px);
+    opacity: 0.55;
+  }
+  .roadmap-stops {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    position: relative;
+  }
+  .stop {
+    text-align: center;
+    position: relative;
+    padding: 0 8px;
+  }
+  .stop .pin {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--paper);
+    border: 3px solid var(--ink);
+    margin: 0 auto 10px;
+    position: relative;
+    z-index: 2;
+  }
+  .stop.now .pin {
+    background: var(--hit);
+    border-color: var(--hit);
+    box-shadow: 0 0 0 4px rgba(200,31,44,0.2);
+  }
+  .stop .when {
+    font-family: "Special Elite", monospace;
+    font-size: 11px;
+    color: var(--hit);
+    letter-spacing: 2px;
+    margin: 0 0 4px;
+  }
+  .stop h5 {
+    font-family: "Caveat", cursive;
+    font-size: 22px;
+    color: var(--ink-dark);
+    margin: 0 0 4px;
+    line-height: 1.05;
+  }
+  .stop p {
+    font-family: "Kalam", cursive;
+    font-size: 13px;
+    color: var(--ink-dark);
+    line-height: 1.35;
+    margin: 0;
+    opacity: 0.8;
+  }
+
+  /* === Footer === */
+  .footer {
+    padding: 40px 56px 56px 100px;
+    border-top: 2px dashed rgba(46,31,158,0.35);
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+  .footer h6 {
+    font-family: "Special Elite", monospace;
+    font-size: 12px;
+    color: var(--hit);
+    letter-spacing: 2.5px;
+    margin: 0 0 12px;
+  }
+  .footer p, .footer a {
+    font-family: "Kalam", cursive;
+    color: var(--ink-dark);
+    font-size: 16px;
+    line-height: 1.6;
+    text-decoration: none;
+    display: block;
+  }
+  .footer a:hover { color: var(--hit); }
+  .footer .colophon {
+    font-family: "Special Elite", monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+    opacity: 0.75;
+  }
+  .footer .wordmark-foot {
+    font-family: "Caveat", cursive;
+    font-weight: 700;
+    font-size: 32px;
+    color: var(--ink);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  /* === The big "play CTA" strip === */
+  .play-strip {
+    background: var(--ink-dark);
+    color: var(--paper);
+    padding: 42px 56px 42px 100px;
+    margin-top: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .play-strip::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px);
+    background-size: 24px 24px;
+    pointer-events: none;
+  }
+  .play-strip > * { position: relative; }
+  .play-strip h3 {
+    font-family: "Caveat", cursive;
+    font-size: 56px;
+    line-height: 1;
+    margin: 0 0 12px;
+    color: var(--paper);
+  }
+  .play-strip h3 .red { color: #ff6068; }
+  .play-strip p {
+    font-family: "Kalam", cursive;
+    font-size: 19px;
+    margin: 0 0 22px;
+    opacity: 0.85;
+    max-width: 560px;
+  }
+
+  /* === Responsive === */
+  @media (max-width: 900px) {
+    .page::before { left: 24px; }
+    .top-strip { padding: 18px 20px 14px 44px; }
+    .top-strip::after { left: 44px; right: 20px; }
+    .hero { grid-template-columns: 1fr; padding: 36px 20px 28px 44px; gap: 24px; }
+    .section, .play-strip, .footer { padding-left: 44px; padding-right: 20px; }
+    .coach-section, .footer { grid-template-columns: 1fr; }
+    .diff-grid { grid-template-columns: 1fr; }
+    .roadmap-stops { grid-template-columns: 1fr 1fr; gap: 24px; }
+    .roadmap-track::before { display: none; }
+    .grid-board { --cell: 28px; }
+    .hero h1 { font-size: 56px; }
+    .nav { display: none; }
+    .section h2, .play-strip h3 { font-size: 40px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SVG defs reused -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <filter id="rough" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="3"/>
+      <feDisplacementMap in="SourceGraphic" scale="2.2"/>
+    </filter>
+  </defs>
+</svg>
+
+<main class="page">
+
+  <!-- ====== TOP STRIP ====== -->
+  <header class="top-strip">
+    <div class="wordmark">
+      <svg class="anchor" viewBox="0 0 32 32" aria-hidden="true">
+        <g fill="none" stroke="#2e1f9e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" filter="url(#rough)">
+          <circle cx="16" cy="6" r="3"/>
+          <line x1="16" y1="9" x2="16" y2="27"/>
+          <line x1="11" y1="13" x2="21" y2="13"/>
+          <path d="M6 22 Q16 30 26 22"/>
+        </g>
+      </svg>
+      Ocean Strike
+    </div>
+    <nav class="nav">
+      <a href="#coach">The Coach</a>
+      <a href="#different">What's different</a>
+      <a href="#roadmap">Roadmap</a>
+      <a href="leaderboard.html">Leaderboard</a>
+      <a href="login.html" class="btn ghost">Sign in</a>
+      <a href="play.html" class="btn">Play free</a>
+    </nav>
+  </header>
+
+  <!-- ====== HERO ====== -->
+  <section class="hero">
+    <div class="hero-copy">
+      <p class="section-eyebrow" style="margin-bottom: 16px;">v0.4 · BROWSER · NO SIGN-UP</p>
+      <h1>
+        The only <span class="red-strike">Battleship</span><br/>
+        that makes&nbsp;you<br/>
+        <span class="ink-strike">better</span> at Battleship.
+      </h1>
+      <p class="tagline">
+        LLM-powered Battleship with a post-game <em>Coach</em> that reads your moves
+        like a textbook and tells you, plainly, what you keep getting wrong.
+      </p>
+      <div class="cta-row">
+        <a href="play.html" class="btn">Start a game →</a>
+        <a href="#coach" class="btn ghost">See the Coach</a>
+        <span class="meta-note">no ads, no paywall on the core loop</span>
+      </div>
+    </div>
+
+    <div class="hero-board-wrap">
+      <span class="stamp">DEMO BOARD</span>
+
+      <!-- Game grid -->
+      <div class="grid-board" aria-hidden="true">
+        <div class="corner"></div>
+        <!-- column headers -->
+        <div class="col-h">A</div><div class="col-h">B</div><div class="col-h">C</div>
+        <div class="col-h">D</div><div class="col-h">E</div><div class="col-h">F</div>
+        <div class="col-h">G</div><div class="col-h">H</div><div class="col-h">I</div>
+        <div class="col-h">J</div>
+        <!-- 10 rows -->
+        <!-- row 1 -->
+        <div class="row-h">1</div>
+        <div class="cell"></div><div class="cell miss"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell miss"></div>
+        <!-- row 2 -->
+        <div class="row-h">2</div>
+        <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell hit"></div><div class="cell"></div><div class="cell"></div><div class="cell miss"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        <!-- row 3 -->
+        <div class="row-h">3</div>
+        <div class="cell miss"></div><div class="cell"></div><div class="cell"></div><div class="cell hit"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell miss"></div>
+        <!-- row 4 -->
+        <div class="row-h">4</div>
+        <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell hit"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell miss"></div><div class="cell"></div><div class="cell"></div>
+        <!-- row 5 -->
+        <div class="row-h">5</div>
+        <div class="cell"></div><div class="cell miss"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        <!-- row 6 -->
+        <div class="row-h">6</div>
+        <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell sunk"></div><div class="cell sunk"></div><div class="cell sunk"></div><div class="cell"></div><div class="cell"></div>
+        <!-- row 7 -->
+        <div class="row-h">7</div>
+        <div class="cell"></div><div class="cell"></div><div class="cell miss"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        <!-- row 8 -->
+        <div class="row-h">8</div>
+        <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell miss"></div><div class="cell"></div>
+        <!-- row 9 -->
+        <div class="row-h">9</div>
+        <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell miss"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        <!-- row 10 -->
+        <div class="row-h">10</div>
+        <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell miss"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+      </div>
+
+      <!-- Coach speech callout pinned -->
+      <div class="coach-callout bottom-left">
+        You shot D2-D3-D4 in a straight line. Predictable.
+        Try a knight-move follow-up next time.
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== COACH SECTION ====== -->
+  <section class="section" id="coach">
+    <div class="coach-section">
+      <div class="coach-copy">
+        <p class="section-eyebrow">THE DIFFERENTIATOR</p>
+        <h2>A coach that <span class="underline">cites</span><br/>your actual moves.</h2>
+        <p>
+          Most game AIs give you generic tips. Ocean Strike's Coach reads
+          every shot you made — sequence, timing, density — and writes you
+          a one-page report after each match.
+        </p>
+        <p>
+          It tracks <span class="term">shot entropy</span>,
+          <span class="term">parity discipline</span>,
+          <span class="term">post-hit follow-through</span>, and
+          <span class="term">placement tendencies</span>.
+          Then it tells you, in plain language, the one habit costing you
+          the most games.
+        </p>
+        <p style="font-family:'Special Elite',monospace; font-size:14px; color:var(--ink-soft); max-width:440px;">
+          // Built on Claude Haiku 4.5. Your moves stay yours.
+        </p>
+      </div>
+
+      <div class="coach-card">
+        <div class="tape"></div>
+        <h3>POST-GAME REPORT · MATCH #027</h3>
+        <p class="verdict">
+          You played like a <span class="hl">methodical hunter</span>
+          — but you flinched after every hit.
+        </p>
+
+        <div class="stat-row">
+          <span>shot entropy</span>
+          <span class="val good">0.81 <small style="font-family:'Special Elite',monospace;font-size:11px;opacity:0.6;">/1.0</small></span>
+        </div>
+        <div class="stat-row">
+          <span>parity discipline</span>
+          <span class="val good">94%</span>
+        </div>
+        <div class="stat-row">
+          <span>post-hit follow-through</span>
+          <span class="val bad">41%</span>
+        </div>
+        <div class="stat-row">
+          <span>avg. wasted shots / match</span>
+          <span class="val bad">6.3</span>
+        </div>
+        <div class="stat-row">
+          <span>archetype drift</span>
+          <span class="val">Sniper → Hunter</span>
+        </div>
+
+        <div class="quote">
+          On turn 14 you hit D2. Instead of pressing D1 or D3 you fired G7 — a guess
+          across the board. You did this in 3 of your last 4 games. Commit to the kill.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== WHAT'S DIFFERENT ====== -->
+  <section class="section" id="different">
+    <p class="section-eyebrow">WHAT'S DIFFERENT</p>
+    <h2>Three things <span class="underline">no one else</span> is doing.</h2>
+
+    <div class="diff-grid" style="margin-top: 32px;">
+      <article class="diff-card">
+        <div class="icon-area">
+          <div class="mini-grid" aria-hidden="true">
+            <div></div><div></div><div></div><div></div><div></div><div></div>
+            <div></div><div></div><div></div><div></div><div></div><div></div>
+            <div></div><div></div><div></div><div></div><div></div><div></div>
+            <div></div><div></div><div></div><div></div><div></div><div></div>
+          </div>
+        </div>
+        <p class="num">01</p>
+        <h4>No ads. No paywalls<br/>on the core loop.</h4>
+        <p>
+          You came to play Battleship. So play Battleship. The core game,
+          the Coach report, all 10×10 grids — free, forever, no banner blocking row B.
+        </p>
+      </article>
+
+      <article class="diff-card">
+        <div class="icon-area">
+          <div class="mini-grid" aria-hidden="true">
+            <div></div><div></div><div class="x"></div><div></div><div></div><div></div>
+            <div></div><div class="r"></div><div class="r"></div><div class="r"></div><div></div><div></div>
+            <div></div><div></div><div class="x"></div><div></div><div class="x"></div><div></div>
+            <div></div><div></div><div></div><div></div><div></div><div></div>
+          </div>
+        </div>
+        <p class="num">02</p>
+        <h4>The Coach cites<br/>your actual moves.</h4>
+        <p>
+          Not "play more strategically." It quotes the exact turn — "On turn 14
+          you hit D2 and ran" — so you can replay, learn, and stop doing it.
+        </p>
+      </article>
+
+      <article class="diff-card">
+        <div class="icon-area">
+          <div class="mini-grid" aria-hidden="true" style="grid-template-columns: repeat(7, 12px);">
+            <div></div><div class="x"></div><div></div><div class="r"></div><div></div><div class="x"></div><div></div>
+            <div class="x"></div><div></div><div class="r"></div><div></div><div class="x"></div><div></div><div class="r"></div>
+            <div></div><div class="r"></div><div></div><div class="x"></div><div></div><div class="r"></div><div></div>
+            <div class="r"></div><div></div><div class="x"></div><div></div><div class="r"></div><div></div><div class="x"></div>
+          </div>
+        </div>
+        <p class="num">03</p>
+        <h4>You evolve.<br/>An archetype emerges.</h4>
+        <p>
+          Across matches your stats compound into an archetype — Sniper, Sweeper,
+          Brawler, Recluse. Watch yourself become a different player.
+        </p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ====== ROADMAP ====== -->
+  <section class="section" id="roadmap">
+    <p class="section-eyebrow">SHIPPING NEXT</p>
+    <h2>The <span class="underline">roadmap</span>, on graph paper.</h2>
+
+    <div class="roadmap">
+      <div class="roadmap-track">
+        <div class="roadmap-stops">
+          <div class="stop now">
+            <div class="pin"></div>
+            <p class="when">NOW · v0.4</p>
+            <h5>Solo + Coach</h5>
+            <p>Single-player, full post-game report, archetype tracking.</p>
+          </div>
+          <div class="stop">
+            <div class="pin"></div>
+            <p class="when">Q3 2026</p>
+            <h5>Multiplayer<br/>by link</h5>
+            <p>WebSocket rooms — share a URL, play a friend.</p>
+          </div>
+          <div class="stop">
+            <div class="pin"></div>
+            <p class="when">Q4 2026</p>
+            <h5>3-Minute Blitz</h5>
+            <p>Speed mode with a shot clock. The Coach scores composure.</p>
+          </div>
+          <div class="stop">
+            <div class="pin"></div>
+            <p class="when">Q1 2027</p>
+            <h5>School<br/>Tournaments</h5>
+            <p>Bracket mode for classrooms. Free for educators.</p>
+          </div>
+          <div class="stop">
+            <div class="pin"></div>
+            <p class="when">LATER</p>
+            <h5>Coach Pro</h5>
+            <p>Per-move analysis, custom skins, deep analytics.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== PLAY STRIP ====== -->
+  <section class="play-strip" id="play">
+    <h3>Your <span class="red">D2-D3-D4</span> habit isn't going to fix itself.</h3>
+    <p>One game takes ~6 minutes. The Coach report, ~20 seconds to read. No sign-up. No download. Browser only.</p>
+    <a href="#" class="btn" style="background:#ff6068; box-shadow: 2px 3px 0 #000; transform: rotate(-0.4deg);">Play Ocean Strike →</a>
+  </section>
+
+  <!-- ====== FOOTER ====== -->
+  <footer class="footer">
+    <div>
+      <div class="wordmark-foot">⚓ Ocean Strike</div>
+      <p style="font-family:'Kalam',cursive;font-size:15px;margin:0 0 10px;max-width:320px;">
+        A small, independent game studio. Battleship, but it teaches.
+      </p>
+      <p class="colophon">
+        // built on graph paper.<br/>
+        // made by two people, a cat, and a kettle.
+      </p>
+    </div>
+    <div>
+      <h6>THE GAME</h6>
+      <a href="play.html">Play now</a>
+      <a href="review.html">Sample Coach report</a>
+      <a href="leaderboard.html">Leaderboard</a>
+      <a href="profile.html">Profile</a>
+      <a href="login.html">Sign in</a>
+      <a href="#coach">Meet the Coach</a>
+      <a href="#different">What's different</a>
+      <a href="#roadmap">Roadmap</a>
+    </div>
+    <div>
+      <h6>ELSEWHERE</h6>
+      <a href="#">Devlog</a>
+      <a href="#">GitHub</a>
+      <a href="#">Email us</a>
+      <a href="#">Press kit</a>
+    </div>
+  </footer>
+
+</main>
+
+<div style="height: 32px;"></div>
+
+</body>
+</html>

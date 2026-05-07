@@ -23,12 +23,17 @@ from app.schemas.shot import BotMove, Coord, ShotRequest, ShotResult
 
 router = APIRouter()
 
+# Holds references to background analysis tasks so they aren't GC'd before completion.
+_bg_tasks: set = set()
+
 
 def _fire_analysis(game_id: str, games_repo: GamesRepo, analyses_repo: AnalysesRepo) -> None:
     """Start coach analysis as a background task (fire-and-forget)."""
     from app.api.analyze import _run_analysis  # local import avoids circular at module load
 
-    asyncio.create_task(_run_analysis(game_id, games_repo, analyses_repo))
+    task = asyncio.create_task(_run_analysis(game_id, games_repo, analyses_repo))
+    _bg_tasks.add(task)
+    task.add_done_callback(_bg_tasks.discard)
 
 
 def _ship_to_dict(ship: Ship) -> dict:
@@ -188,6 +193,7 @@ async def shoot(
         "coord": [row, col],
         "result": p_result,
         "sunk_ship": p_sunk_name,
+        "ts": int(datetime.now(timezone.utc).timestamp() * 1000),
     }
     moves.append(player_move)
 
@@ -233,6 +239,7 @@ async def shoot(
         "coord": [br, bc],
         "result": b_result,
         "sunk_ship": b_sunk_name,
+        "ts": int(datetime.now(timezone.utc).timestamp() * 1000),
     }
     moves.append(bot_move_record)
 

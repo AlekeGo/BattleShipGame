@@ -9,13 +9,10 @@ from app.db.repositories.games import GamesRepo
 from app.deps import get_analyses_repo, get_games_repo
 from app.engine.features import extract_features
 from app.schemas.coach import CoachAnalysis
+from app.utils import parse_json_field as _parse
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-
-
-def _parse(raw) -> list | dict:
-    return raw if isinstance(raw, (list, dict)) else json.loads(raw)
 
 
 def _row_to_analysis(row: dict) -> CoachAnalysis:
@@ -32,15 +29,16 @@ async def _run_analysis(
     game_id: str,
     games_repo: GamesRepo,
     analyses_repo: AnalysesRepo,
+    _game: dict | None = None,
 ) -> CoachAnalysis | None:
-    """Core analysis logic — shared by endpoint and precompute task."""
+    """Core analysis logic — shared by endpoint and fire-and-forget task."""
     try:
         # Guard against concurrent callers (background task + explicit POST)
         existing = await analyses_repo.get(game_id)
         if existing:
             return _row_to_analysis(existing)
 
-        game = await games_repo.get(game_id)
+        game = _game or await games_repo.get(game_id)
         if not game or game["status"] != "finished":
             return None
 
@@ -91,7 +89,7 @@ async def analyze_game(
     if game["status"] != "finished":
         raise HTTPException(400, "Game is not finished yet")
 
-    analysis = await _run_analysis(game_id, games_repo, analyses_repo)
+    analysis = await _run_analysis(game_id, games_repo, analyses_repo, _game=game)
     if analysis is None:
         raise HTTPException(500, "Analysis failed")
     return analysis

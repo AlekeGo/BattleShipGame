@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Game in progress · Ocean Strike</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+  .battle {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 32px;
+    padding: 28px 56px 24px 100px;
+    align-items: start;
+  }
+  @media (max-width: 1100px) {
+    .battle { grid-template-columns: 1fr; padding: 20px 20px 20px 44px; gap: 20px; }
+  }
+  .board-col { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .board-col .head-row {
+    display: flex; align-items: baseline; justify-content: space-between;
+    width: 100%; gap: 12px;
+  }
+  .board-col h3 {
+    font-family: "Caveat", cursive; font-weight: 700;
+    font-size: 32px; line-height: 1; margin: 0;
+    color: var(--ink-dark);
+  }
+  .ships-remaining {
+    display: flex; gap: 6px;
+    font-family: "Special Elite", monospace;
+    font-size: 11px; letter-spacing: 1.5px;
+    color: var(--ink-soft);
+  }
+  .pip {
+    width: 14px; height: 14px;
+    border: 1.5px solid var(--ink);
+    background: rgba(46,31,158,0.18);
+  }
+  .pip.gone { background: transparent; border-color: var(--hit); position: relative; }
+  .pip.gone::after {
+    content: "✗"; position: absolute; inset: 0;
+    font-family: "Caveat", cursive; font-weight: 700;
+    color: var(--hit); font-size: 14px; line-height: 0.7;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .center-col {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 14px; padding-top: 28px;
+    min-width: 200px;
+  }
+  .turn-counter {
+    width: 90px; height: 90px;
+    background: var(--green);
+    color: var(--paper);
+    display: flex; align-items: center; justify-content: center;
+    font-family: "Caveat", cursive; font-weight: 700;
+    font-size: 48px; line-height: 1;
+    clip-path: polygon(50% 0, 100% 100%, 0 100%);
+    transform: rotate(-3deg);
+    box-shadow: 3px 4px 0 var(--ink-dark);
+    padding-top: 22px;
+  }
+  .turn-counter.enemy { background: var(--hit); padding-top: 22px; }
+  .turn-label {
+    font-family: "Special Elite", monospace;
+    font-size: 11px; letter-spacing: 2px;
+    color: var(--ink-soft); text-align: center;
+  }
+  .turn-msg {
+    font-family: "Caveat", cursive; font-size: 26px; font-weight: 700;
+    color: var(--ink-dark); text-align: center; line-height: 1; margin-top: 4px;
+  }
+
+  .scoreline {
+    display: grid; grid-template-columns: 1fr auto 1fr;
+    gap: 14px; align-items: center;
+    width: 100%; max-width: 220px;
+    padding: 10px 0; margin-top: 6px;
+    border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink);
+  }
+  .scoreline .name {
+    font-family: "Caveat", cursive; font-weight: 700; font-size: 22px;
+    line-height: 1; color: var(--ink-dark);
+  }
+  .scoreline .name small { display: block; font-family: "Special Elite", monospace; font-size: 10px; letter-spacing: 1.5px; color: var(--ink-soft); font-weight: 400; }
+  .scoreline .score {
+    font-family: "Caveat", cursive; font-weight: 700; font-size: 36px;
+    color: var(--hit); line-height: 1;
+  }
+  .scoreline .vs { font-family: "Special Elite", monospace; font-size: 11px; color: var(--ink-soft); }
+
+  .turnlog {
+    width: 100%; max-width: 220px;
+    background: var(--paper-2);
+    border: 2.5px solid var(--ink);
+    padding: 12px 14px;
+    margin-top: 8px;
+    max-height: 280px; overflow-y: auto;
+  }
+  .turnlog h4 {
+    font-family: "Special Elite", monospace; font-size: 11px;
+    color: var(--hit); letter-spacing: 2px; margin: 0 0 8px;
+  }
+  .turnlog ul { list-style: none; margin: 0; padding: 0; }
+  .turnlog li {
+    display: flex; gap: 8px; align-items: baseline;
+    padding: 4px 0;
+    font-family: "Special Elite", monospace; font-size: 12px;
+    color: var(--ink-dark);
+    border-bottom: 1px dashed rgba(46,31,158,0.2);
+  }
+  .turnlog li:last-child { border-bottom: none; }
+  .turnlog .t { color: var(--ink-soft); width: 22px; }
+  .turnlog .who { font-family: "Caveat", cursive; font-weight: 700; font-size: 16px; line-height: 1; }
+  .turnlog .who.me { color: var(--ink); }
+  .turnlog .who.bot { color: var(--hit); }
+  .turnlog .res {
+    font-family: "Special Elite", monospace; font-size: 11px;
+    margin-left: auto; letter-spacing: 1px;
+  }
+  .turnlog .res.miss { color: var(--ink-soft); }
+  .turnlog .res.hit { color: var(--hit); font-weight: 700; }
+  .turnlog .res.sunk { color: var(--hit); font-weight: 700; background: rgba(200,31,44,0.12); padding: 1px 4px; }
+
+  .control-bar {
+    padding: 14px 56px 22px 100px;
+    border-top: 2px dashed rgba(46,31,158,0.35);
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 12px;
+  }
+  @media (max-width: 900px) { .control-bar { padding-left: 44px; padding-right: 20px; } }
+  .control-bar .ctrl-left { display: flex; gap: 10px; align-items: center; }
+
+  .toast-shot {
+    position: fixed; left: 50%; top: 24%;
+    transform: translateX(-50%) rotate(-2deg);
+    background: var(--paper);
+    border: 2.5px solid var(--hit);
+    padding: 10px 22px;
+    font-family: "Caveat", cursive; font-weight: 700;
+    font-size: 28px; color: var(--hit);
+    box-shadow: 4px 5px 0 var(--ink-dark);
+    z-index: 99;
+    pointer-events: none;
+    opacity: 0;
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <filter id="rough"><feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="2.2"/></filter>
+</defs></svg>
+
+<main class="page wide" data-screen-label="game / active">
+  <header class="app-header">
+    <a href="index.html" class="wordmark">
+      <svg class="anchor" viewBox="0 0 32 32" aria-hidden="true">
+        <g fill="none" stroke="#2e1f9e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" filter="url(#rough)">
+          <circle cx="16" cy="6" r="3"/><line x1="16" y1="9" x2="16" y2="27"/>
+          <line x1="11" y1="13" x2="21" y2="13"/><path d="M6 22 Q16 30 26 22"/>
+        </g>
+      </svg>
+      Ocean Strike
+    </a>
+    <nav class="right">
+      <span class="mono" style="font-size:12px;letter-spacing:1.5px;color:var(--ink-soft);">MATCH #028 · MEDIUM BOT</span>
+      <a href="profile.html" class="user-chip"><span class="avatar">A</span> asadullo</a>
+    </nav>
+  </header>
+
+  <div class="route-bar">
+    <span><span style="opacity:0.5">~/</span><span class="route">game/8f2c-a4d1</span> &nbsp;·&nbsp; turn 14 of unknown</span>
+    <span style="color:var(--green);">● live</span>
+  </div>
+
+  <section class="battle">
+    <!-- LEFT: your fleet -->
+    <div class="board-col">
+      <div class="head-row">
+        <h3>Your fleet</h3>
+        <div class="ships-remaining">
+          <span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip gone"></span><span class="pip"></span>
+        </div>
+      </div>
+
+      <div class="grid-board small" aria-label="Your fleet">
+        <div class="corner"></div>
+        <div class="col-h">A</div><div class="col-h">B</div><div class="col-h">C</div><div class="col-h">D</div><div class="col-h">E</div><div class="col-h">F</div><div class="col-h">G</div><div class="col-h">H</div><div class="col-h">I</div><div class="col-h">J</div>
+
+        <div class="row-h">1</div><div class="cell ship head"></div><div class="cell ship"></div><div class="cell ship"></div><div class="cell ship"></div><div class="cell ship tail"></div><div class="cell"></div><div class="cell miss"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        <div class="row-h">2</div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell ship head-v hit"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        <div class="row-h">3</div><div class="cell miss"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell ship hit"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        <div class="row-h">4</div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell ship sunk"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        <div class="row-h">5</div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell miss"></div><div class="cell ship sunk tail-v"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        <div class="row-h">6</div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        <div class="row-h">7</div><div class="cell"></div><div class="cell"></div><div class="cell ship head"></div><div class="cell ship"></div><div class="cell ship tail"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell miss"></div>
+        <div class="row-h">8</div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        <div class="row-h">9</div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell miss"></div><div class="cell ship head"></div><div class="cell ship"></div><div class="cell ship tail"></div>
+        <div class="row-h">10</div><div class="cell"></div><div class="cell miss"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+      </div>
+      <p class="mono" style="font-size:11px;color:var(--ink-soft);letter-spacing:1.5px;">// 1 sunk · 2 hits · 13 cells afloat</p>
+    </div>
+
+    <!-- CENTER: turn + score + log -->
+    <div class="center-col">
+      <div class="turn-label">TURN 14</div>
+      <div class="turn-counter">YOU</div>
+      <div class="turn-msg">Take a shot,<br/>commander.</div>
+
+      <div class="scoreline">
+        <div class="name" style="text-align:right;">YOU<small>asadullo</small></div>
+        <div class="score" style="text-align:center;">8 <span class="vs">vs</span> 5</div>
+        <div class="name">BOT<small>medium · v0.4</small></div>
+      </div>
+
+      <div class="turnlog">
+        <h4>TURN LOG</h4>
+        <ul>
+          <li><span class="t">14</span><span class="who me">YOU</span><span>· thinking</span><span class="res">…</span></li>
+          <li><span class="t">13</span><span class="who bot">BOT</span><span>G5</span><span class="res sunk">SUNK</span></li>
+          <li><span class="t">12</span><span class="who me">YOU</span><span>D2</span><span class="res hit">HIT</span></li>
+          <li><span class="t">11</span><span class="who bot">BOT</span><span>G4</span><span class="res hit">HIT</span></li>
+          <li><span class="t">10</span><span class="who me">YOU</span><span>G7</span><span class="res miss">miss</span></li>
+          <li><span class="t">09</span><span class="who bot">BOT</span><span>G3</span><span class="res hit">HIT</span></li>
+          <li><span class="t">08</span><span class="who me">YOU</span><span>C2</span><span class="res miss">miss</span></li>
+          <li><span class="t">07</span><span class="who bot">BOT</span><span>G2</span><span class="res hit">HIT</span></li>
+          <li><span class="t">06</span><span class="who me">YOU</span><span>D4</span><span class="res hit">HIT</span></li>
+          <li><span class="t">05</span><span class="who bot">BOT</span><span>A1</span><span class="res hit">HIT</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- RIGHT: enemy waters (target) -->
+    <div class="board-col">
+      <div class="head-row">
+        <h3 style="text-align:right;">Enemy waters</h3>
+        <div class="ships-remaining">
+          <span class="pip"></span><span class="pip gone"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span>
+        </div>
+      </div>
+
+      <div class="grid-board small" aria-label="Enemy waters">
+        <div class="corner"></div>
+        <div class="col-h">A</div><div class="col-h">B</div><div class="col-h">C</div><div class="col-h">D</div><div class="col-h">E</div><div class="col-h">F</div><div class="col-h">G</div><div class="col-h">H</div><div class="col-h">I</div><div class="col-h">J</div>
+
+        <div class="row-h">1</div><div class="cell"></div><div class="cell miss"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell miss"></div>
+        <div class="row-h">2</div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell hit last-shot"></div><div class="cell target"></div><div class="cell"></div><div class="cell miss"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        <div class="row-h">3</div><div class="cell miss"></div><div class="cell"></div><div class="cell"></div><div class="cell hit"></div><div class="cell target"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell miss"></div>
+        <div class="row-h">4</div><div class="cell target"></div><div class="cell"></div><div class="cell"></div><div class="cell hit"></div><div class="cell target"></div><div class="cell"></div><div class="cell"></div><div class="cell miss"></div><div class="cell"></div><div class="cell"></div>
+        <div class="row-h">5</div><div class="cell"></div><div class="cell miss"></div><div class="cell"></div><div class="cell target"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        <div class="row-h">6</div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell sunk"></div><div class="cell sunk"></div><div class="cell sunk"></div><div class="cell"></div><div class="cell"></div>
+        <div class="row-h">7</div><div class="cell"></div><div class="cell"></div><div class="cell miss"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell miss"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        <div class="row-h">8</div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell miss"></div><div class="cell"></div>
+        <div class="row-h">9</div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell miss"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        <div class="row-h">10</div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell miss"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+      </div>
+      <p class="mono" style="font-size:11px;color:var(--ink-soft);letter-spacing:1.5px;">// 1 sunk · 3 hits · 14 cells afloat · click to fire</p>
+    </div>
+  </section>
+
+  <div class="control-bar">
+    <div class="ctrl-left">
+      <button class="btn ghost small">↻ Resign</button>
+      <button class="btn ghost small">⚑ Flag bot</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <span class="mono" style="font-size:11px;color:var(--hit);letter-spacing:1.5px;">▲ COACH IS RECORDING — patterns: shot entropy 0.79, follow-through 38%</span>
+    </div>
+  </div>
+</main>
+
+<div style="height:32px;"></div>
+</body>
+</html>

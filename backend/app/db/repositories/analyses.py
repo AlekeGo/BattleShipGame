@@ -17,6 +17,13 @@ class AnalysesRepo:
         )
         return res.data if res else None
 
+    async def get_batch(self, game_ids: list[str]) -> dict[str, dict]:
+        """Return {game_id: row} for all matching game_ids in one query."""
+        if not game_ids:
+            return {}
+        res = self.db.table("analyses").select("*").in_("game_id", game_ids).execute()
+        return {row["game_id"]: row for row in (res.data or [])}
+
     async def create(
         self,
         game_id: str,

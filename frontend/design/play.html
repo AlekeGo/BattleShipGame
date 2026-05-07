@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>New Game · Ocean Strike</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+  .play-grid {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: 40px;
+    padding: 36px 56px 36px 100px;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .play-grid { grid-template-columns: 1fr; padding: 24px 20px 24px 44px; }
+  }
+  .mode-row {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 10px; margin-bottom: 18px;
+  }
+  .mode-card {
+    cursor: pointer; padding: 14px 12px 16px;
+    background: var(--paper);
+    border: 2.5px solid var(--ink);
+    text-align: center;
+    transition: transform 0.1s, background 0.15s;
+    position: relative;
+  }
+  .mode-card:hover { background: var(--paper-2); }
+  .mode-card.selected {
+    background: var(--ink-dark); color: var(--paper);
+    transform: rotate(-0.6deg);
+  }
+  .mode-card.selected .mode-name,
+  .mode-card.selected .mode-desc { color: var(--paper); }
+  .mode-card.selected::after {
+    content: "✓"; position: absolute; top: -10px; right: -10px;
+    width: 26px; height: 26px;
+    background: var(--hit); color: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: "Caveat", cursive; font-weight: 700; font-size: 18px;
+  }
+  .mode-name {
+    font-family: "Caveat", cursive; font-weight: 700;
+    font-size: 26px; line-height: 1; color: var(--ink-dark);
+  }
+  .mode-desc {
+    font-family: "Special Elite", monospace;
+    font-size: 11px; letter-spacing: 1px;
+    color: var(--ink-soft); margin-top: 4px;
+  }
+  .mode-stars { color: var(--hit); font-size: 14px; letter-spacing: 1px; margin-top: 6px; }
+
+  .placement-board-wrap {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 16px;
+  }
+  .fleet-row {
+    display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+    padding: 14px 0;
+    border-top: 1px dashed rgba(46,31,158,0.3);
+    border-bottom: 1px dashed rgba(46,31,158,0.3);
+    width: 100%;
+  }
+  .ship-piece {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 10px; cursor: grab;
+    border: 2px dashed var(--ink);
+    background: var(--paper-2);
+    font-family: "Special Elite", monospace; font-size: 11px;
+    color: var(--ink-soft); letter-spacing: 1px;
+  }
+  .ship-piece.placed { opacity: 0.35; cursor: default; border-style: solid; background: transparent; }
+  .ship-piece .pellets {
+    display: inline-flex; gap: 2px;
+  }
+  .ship-piece .pellet {
+    width: 14px; height: 14px;
+    background: rgba(46,31,158,0.18);
+    background-image: repeating-linear-gradient(45deg, rgba(46,31,158,0.4) 0 1.5px, transparent 1.5px 5px);
+    border: 1px solid var(--ink);
+  }
+  .keys {
+    display: flex; gap: 18px;
+    font-family: "Special Elite", monospace; font-size: 12px;
+    color: var(--ink-soft); letter-spacing: 1.5px;
+  }
+  .key {
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .kbd {
+    display: inline-block;
+    background: var(--paper-2);
+    border: 1.5px solid var(--ink);
+    padding: 1px 7px;
+    font-family: "Special Elite", monospace;
+    font-size: 12px; color: var(--ink-dark);
+    box-shadow: 1px 1.5px 0 var(--ink);
+  }
+
+  .checklist {
+    list-style: none; padding: 0; margin: 18px 0 0;
+    font-family: "Kalam", cursive; font-size: 17px; color: var(--ink-dark);
+  }
+  .checklist li {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 0; border-bottom: 1px dashed rgba(46,31,158,0.2);
+  }
+  .checklist li .box {
+    width: 22px; height: 22px;
+    border: 2px solid var(--ink);
+    background: var(--paper);
+    display: flex; align-items: center; justify-content: center;
+    font-family: "Caveat", cursive; font-weight: 700;
+    color: var(--green); font-size: 22px; line-height: 1;
+  }
+  .checklist li.done .box::after { content: "✓"; }
+  .checklist li.done span { text-decoration: line-through; opacity: 0.6; }
+
+  .footer-bar {
+    padding: 24px 56px 32px 100px;
+    border-top: 2px dashed rgba(46,31,158,0.35);
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 18px;
+  }
+  @media (max-width: 900px) {
+    .footer-bar { padding-left: 44px; padding-right: 20px; flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <filter id="rough"><feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="2.2"/></filter>
+</defs></svg>
+
+<main class="page" data-screen-label="play / setup">
+  <header class="app-header">
+    <a href="index.html" class="wordmark">
+      <svg class="anchor" viewBox="0 0 32 32" aria-hidden="true">
+        <g fill="none" stroke="#2e1f9e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" filter="url(#rough)">
+          <circle cx="16" cy="6" r="3"/><line x1="16" y1="9" x2="16" y2="27"/>
+          <line x1="11" y1="13" x2="21" y2="13"/><path d="M6 22 Q16 30 26 22"/>
+        </g>
+      </svg>
+      Ocean Strike
+    </a>
+    <nav class="right">
+      <a href="leaderboard.html">Leaderboard</a>
+      <a href="profile.html" class="user-chip">
+        <span class="avatar">A</span> asadullo
+      </a>
+    </nav>
+  </header>
+
+  <div class="route-bar">
+    <span><span style="opacity:0.5">~/</span><span class="route">play</span> &nbsp;·&nbsp; new game setup</span>
+    <span>step 2 / 2 — placement</span>
+  </div>
+
+  <div class="play-grid">
+    <!-- LEFT: mode + checklist -->
+    <section>
+      <p class="section-eyebrow" style="margin-bottom:10px;">PICK YOUR OPPONENT</p>
+      <h2 class="hand" style="font-weight:700;font-size:42px;line-height:1;margin:0 0 18px;color:var(--ink-dark);">Who are we sinking today?</h2>
+
+      <div class="mode-row">
+        <div class="mode-card">
+          <div class="mode-name">Easy</div>
+          <div class="mode-stars">★ ☆ ☆</div>
+          <div class="mode-desc">RANDOM SHOTS</div>
+        </div>
+        <div class="mode-card selected">
+          <div class="mode-name">Medium</div>
+          <div class="mode-stars">★ ★ ☆</div>
+          <div class="mode-desc">HUNT + TARGET</div>
+        </div>
+        <div class="mode-card">
+          <div class="mode-name">Hard</div>
+          <div class="mode-stars">★ ★ ★</div>
+          <div class="mode-desc">PROBABILITY MAP</div>
+        </div>
+        <div class="mode-card">
+          <div class="mode-name">Hot-seat</div>
+          <div class="mode-stars" style="color:var(--ink-soft);font-family:'Special Elite',monospace;font-size:11px;letter-spacing:1.5px;">2 PLAYERS</div>
+          <div class="mode-desc">SAME DEVICE</div>
+        </div>
+      </div>
+
+      <div class="hd-card tilt-l" style="margin-top: 24px;">
+        <p class="section-eyebrow" style="margin:0 0 4px;">LOADOUT</p>
+        <p class="hand" style="font-size:30px;font-weight:700;line-height:1;color:var(--ink-dark);margin:0 0 6px;">Standard fleet</p>
+        <p class="body-hand" style="font-size:15px;margin:0 0 12px;color:var(--ink-soft);">5 ships · 17 cells · classic 10×10</p>
+        <ul class="checklist">
+          <li class="done"><span class="box"></span><span>Carrier <span class="mono" style="font-size:12px;color:var(--ink-soft);">— 5 cells</span></span></li>
+          <li class="done"><span class="box"></span><span>Battleship <span class="mono" style="font-size:12px;color:var(--ink-soft);">— 4 cells</span></span></li>
+          <li class="done"><span class="box"></span><span>Cruiser <span class="mono" style="font-size:12px;color:var(--ink-soft);">— 3 cells</span></span></li>
+          <li><span class="box"></span><span>Submarine <span class="mono" style="font-size:12px;color:var(--ink-soft);">— 3 cells</span></span></li>
+          <li><span class="box"></span><span>Destroyer <span class="mono" style="font-size:12px;color:var(--ink-soft);">— 2 cells</span></span></li>
+        </ul>
+      </div>
+
+      <p class="mono" style="font-size:12px;color:var(--ink-soft);margin-top:18px;letter-spacing:1px;">
+        // tip: the Coach scores your placement entropy. clusters get punished.
+      </p>
+    </section>
+
+    <!-- RIGHT: placement board -->
+    <section class="placement-board-wrap">
+      <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px;">
+        <span class="sticker">YOUR WATERS</span>
+        <span class="mono" style="font-size:11px;color:var(--ink-soft);letter-spacing:1.5px;">3 / 5 PLACED</span>
+      </div>
+
+      <div class="grid-board" aria-label="Placement board">
+        <div class="corner"></div>
+        <div class="col-h">A</div><div class="col-h">B</div><div class="col-h">C</div><div class="col-h">D</div><div class="col-h">E</div><div class="col-h">F</div><div class="col-h">G</div><div class="col-h">H</div><div class="col-h">I</div><div class="col-h">J</div>
+
+        <div class="row-h">1</div>
+        <div class="cell ship head"></div><div class="cell ship"></div><div class="cell ship"></div><div class="cell ship"></div><div class="cell ship tail"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+
+        <div class="row-h">2</div>
+        <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell ship head-v"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+
+        <div class="row-h">3</div>
+        <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell ship"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+
+        <div class="row-h">4</div>
+        <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell ship"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+
+        <div class="row-h">5</div>
+        <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell ship tail-v"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+
+        <div class="row-h">6</div>
+        <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+
+        <div class="row-h">7</div>
+        <div class="cell"></div><div class="cell"></div><div class="cell ship head"></div><div class="cell ship"></div><div class="cell ship tail"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+
+        <div class="row-h">8</div>
+        <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+
+        <div class="row-h">9</div>
+        <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell target"></div><div class="cell target"></div><div class="cell target"></div>
+
+        <div class="row-h">10</div>
+        <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+      </div>
+
+      <div class="fleet-row">
+        <div class="ship-piece placed">
+          <span class="pellets"><span class="pellet"></span><span class="pellet"></span><span class="pellet"></span><span class="pellet"></span><span class="pellet"></span></span>
+          CARRIER · 5
+        </div>
+        <div class="ship-piece placed">
+          <span class="pellets"><span class="pellet"></span><span class="pellet"></span><span class="pellet"></span><span class="pellet"></span></span>
+          BATTLESHIP · 4
+        </div>
+        <div class="ship-piece placed">
+          <span class="pellets"><span class="pellet"></span><span class="pellet"></span><span class="pellet"></span></span>
+          CRUISER · 3
+        </div>
+        <div class="ship-piece" draggable="true">
+          <span class="pellets"><span class="pellet"></span><span class="pellet"></span><span class="pellet"></span></span>
+          SUBMARINE · 3
+        </div>
+        <div class="ship-piece" draggable="true">
+          <span class="pellets"><span class="pellet"></span><span class="pellet"></span></span>
+          DESTROYER · 2
+        </div>
+      </div>
+
+      <div class="keys">
+        <span class="key"><span class="kbd">DRAG</span> to place</span>
+        <span class="key"><span class="kbd">R</span> rotate</span>
+        <span class="key"><span class="kbd">⌫</span> remove</span>
+      </div>
+    </section>
+  </div>
+
+  <div class="footer-bar">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <a href="index.html" class="btn ghost small">← back</a>
+      <button class="btn ghost">⚄ Auto-place</button>
+      <button class="btn ghost">↺ Clear board</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <span class="mono" style="font-size:12px;color:var(--ink-soft);letter-spacing:1.5px;">// place 2 more to start</span>
+      <button class="btn big" disabled style="opacity:0.5;cursor:not-allowed;">Set sail →</button>
+    </div>
+  </div>
+</main>
+
+<div style="height:32px;"></div>
+</body>
+</html>

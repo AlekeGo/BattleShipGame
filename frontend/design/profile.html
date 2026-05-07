@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Profile · Ocean Strike</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+  .profile-hero {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 36px;
+    padding: 36px 56px 28px 100px;
+    align-items: end;
+  }
+  @media (max-width: 900px) {
+    .profile-hero { grid-template-columns: 1fr; padding: 24px 20px 20px 44px; }
+  }
+  .profile-hero h1 {
+    font-family: "Caveat", cursive; font-weight: 700;
+    font-size: 64px; line-height: 1; margin: 0 0 6px;
+    color: var(--ink-dark);
+  }
+  .profile-hero .handle {
+    font-family: "Special Elite", monospace; font-size: 13px;
+    letter-spacing: 2px; color: var(--ink-soft);
+    margin: 0 0 16px;
+  }
+  .badges { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  .two-col {
+    display: grid; grid-template-columns: 1fr 1.2fr;
+    gap: 36px;
+    padding: 12px 56px 32px 100px;
+    align-items: start;
+  }
+  @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; padding-left: 44px; padding-right: 20px; } }
+
+  .form-card {
+    background: var(--paper);
+    border: 2.5px solid var(--ink);
+    padding: 22px 24px;
+    transform: rotate(-0.3deg);
+  }
+  .form-card h3 {
+    font-family: "Special Elite", monospace;
+    font-size: 12px; letter-spacing: 2.5px;
+    color: var(--hit); margin: 0 0 14px;
+  }
+  .form-card .help {
+    font-family: "Kalam", cursive; font-size: 14px;
+    color: var(--ink-soft); margin: 0 0 18px;
+    line-height: 1.45;
+  }
+  .form-card .row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 10px; gap: 10px;
+  }
+  .saved-tag {
+    font-family: "Special Elite", monospace; font-size: 11px;
+    color: var(--green); letter-spacing: 1.5px;
+  }
+
+  .stats-summary {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 12px; margin-bottom: 22px;
+  }
+  @media (max-width: 700px) { .stats-summary { grid-template-columns: 1fr 1fr; } }
+  .stat-tile {
+    background: var(--paper);
+    border: 2.5px solid var(--ink);
+    padding: 16px 16px 14px;
+    position: relative;
+  }
+  .stat-tile:nth-child(1) { transform: rotate(-0.5deg); }
+  .stat-tile:nth-child(2) { transform: rotate(0.3deg); }
+  .stat-tile:nth-child(3) { transform: rotate(-0.2deg); }
+  .stat-tile:nth-child(4) { transform: rotate(0.4deg); }
+  .stat-tile .label {
+    font-family: "Special Elite", monospace; font-size: 10px;
+    letter-spacing: 1.5px; color: var(--ink-soft);
+    margin: 0 0 4px;
+  }
+  .stat-tile .num {
+    font-family: "Caveat", cursive; font-weight: 700;
+    font-size: 48px; line-height: 0.95;
+    color: var(--ink); margin: 0;
+  }
+  .stat-tile .num small {
+    font-family: "Special Elite", monospace; font-size: 14px;
+    color: var(--ink-soft); font-weight: 400;
+  }
+  .stat-tile .delta {
+    font-family: "Kalam", cursive; font-size: 13px;
+    color: var(--green); margin-top: 2px;
+  }
+  .stat-tile .delta.bad { color: var(--hit); }
+
+  .archetype-section h3 {
+    font-family: "Caveat", cursive; font-size: 30px;
+    color: var(--ink-dark); margin: 0 0 4px; line-height: 1;
+  }
+  .archetype-section .sub {
+    font-family: "Special Elite", monospace; font-size: 11px;
+    color: var(--ink-soft); letter-spacing: 1.5px; margin: 0 0 14px;
+  }
+  .arch-pills {
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .arch-pill {
+    padding: 6px 14px;
+    border: 2.5px solid var(--ink);
+    background: var(--paper);
+    font-family: "Caveat", cursive; font-weight: 700;
+    font-size: 18px; color: var(--ink-dark);
+    text-decoration: none;
+    box-shadow: 1.5px 2px 0 rgba(20,9,74,0.2);
+  }
+  .arch-pill .when {
+    display: block;
+    font-family: "Special Elite", monospace; font-size: 9px;
+    letter-spacing: 1.5px; color: var(--ink-soft); font-weight: 400;
+  }
+  .arch-pill.now { background: var(--hit); color: #fff7e8; border-color: var(--hit); }
+  .arch-pill.now .when { color: rgba(255,255,255,0.8); }
+  .arch-pill.shift { transform: rotate(-1deg); border-style: dashed; }
+
+  .recent-list {
+    list-style: none; padding: 0; margin: 16px 0 0;
+    display: grid; gap: 8px;
+  }
+  .recent-list li {
+    display: grid;
+    grid-template-columns: 60px 1fr auto auto auto;
+    gap: 12px; align-items: center;
+    padding: 10px 14px;
+    background: var(--paper-2);
+    border: 2px solid var(--ink);
+    font-family: "Kalam", cursive; font-size: 16px;
+    color: var(--ink-dark);
+    text-decoration: none;
+  }
+  .recent-list li:hover { background: var(--paper); }
+  .recent-list .id {
+    font-family: "Special Elite", monospace; font-size: 12px;
+    color: var(--ink-soft); letter-spacing: 1px;
+  }
+  .recent-list .res {
+    font-family: "Caveat", cursive; font-weight: 700;
+    font-size: 22px; line-height: 1;
+  }
+  .recent-list .res.win { color: var(--green); }
+  .recent-list .res.loss { color: var(--hit); }
+  .recent-list .acc {
+    font-family: "Special Elite", monospace; font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .recent-list .arch {
+    font-family: "Caveat", cursive; font-size: 18px;
+    color: var(--ink); font-weight: 700;
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <filter id="rough"><feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="2.2"/></filter>
+</defs></svg>
+
+<main class="page" data-screen-label="profile">
+  <header class="app-header">
+    <a href="index.html" class="wordmark">
+      <svg class="anchor" viewBox="0 0 32 32" aria-hidden="true">
+        <g fill="none" stroke="#2e1f9e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" filter="url(#rough)">
+          <circle cx="16" cy="6" r="3"/><line x1="16" y1="9" x2="16" y2="27"/>
+          <line x1="11" y1="13" x2="21" y2="13"/><path d="M6 22 Q16 30 26 22"/>
+        </g>
+      </svg>
+      Ocean Strike
+    </a>
+    <nav class="right">
+      <a href="leaderboard.html">Leaderboard</a>
+      <a href="play.html">New game</a>
+      <a href="login.html" class="mono" style="font-size:12px;letter-spacing:1.5px;color:var(--ink-soft);">log out</a>
+    </nav>
+  </header>
+
+  <div class="route-bar">
+    <span><span style="opacity:0.5">~/</span><span class="route">profile</span> &nbsp;·&nbsp; identity + stats</span>
+    <span>last login · 12 min ago</span>
+  </div>
+
+  <section class="profile-hero">
+    <div class="portrait">
+      <div class="corners"></div>
+      <div class="ph">
+        ◌<br/>
+        DROP<br/>AVATAR<br/>HERE<br/>
+        <span style="opacity:0.4;font-size:9px;">240×320</span>
+      </div>
+    </div>
+    <div>
+      <p class="section-eyebrow">CALL SIGN</p>
+      <h1>Asadullo</h1>
+      <p class="handle">@asadullo · CENTRAL ASIA · joined Mar 2026</p>
+      <div class="badges">
+        <span class="sticker">HUNTER</span>
+        <span class="stamp green tilt">RANKED · 247</span>
+        <span class="mono" style="font-size:13px;color:var(--ink-soft);letter-spacing:1.5px;">// 28 games · 19 W / 9 L</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="two-col">
+    <!-- LEFT: identity form -->
+    <div>
+      <p class="section-eyebrow" style="margin-bottom:10px;">YOUR IDENTITY</p>
+      <div class="form-card">
+        <h3>EDIT PROFILE</h3>
+        <p class="help">Display name and region appear on the public leaderboard. A region is required to be ranked.</p>
+
+        <div class="field">
+          <label>DISPLAY NAME</label>
+          <input class="input" value="Asadullo" placeholder="e.g. AdmiralRustam"/>
+        </div>
+        <div class="field">
+          <label>REGION <span class="mono" style="font-size:10px;color:var(--hit);">· REQUIRED</span></label>
+          <select class="input">
+            <option>Central Asia</option>
+            <option>Europe — West</option>
+            <option>Europe — East</option>
+            <option>North America</option>
+            <option>South America</option>
+            <option>Asia — East</option>
+            <option>Asia — South</option>
+            <option>Oceania</option>
+            <option>Africa</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>EMAIL</label>
+          <input class="input" type="email" value="asadullo@oceanstrike.io"/>
+        </div>
+        <label class="checkbox-row" style="margin-top:8px;">
+          <input type="checkbox" checked/> <span>Show me on the regional leaderboard</span>
+        </label>
+        <label class="checkbox-row" style="margin-top:6px;">
+          <input type="checkbox"/> <span>Email me my Coach report after each match</span>
+        </label>
+
+        <div class="row">
+          <span class="saved-tag">✓ saved 3 min ago</span>
+          <button class="btn small">Save changes</button>
+        </div>
+      </div>
+
+      <p class="mono" style="font-size:11px;color:var(--ink-soft);letter-spacing:1.5px;margin-top:14px;">
+        // PATCH /api/users/asadullo/profile
+      </p>
+    </div>
+
+    <!-- RIGHT: stats -->
+    <div>
+      <p class="section-eyebrow" style="margin-bottom:10px;">YOUR STATS</p>
+
+      <div class="stats-summary">
+        <div class="stat-tile">
+          <p class="label">WIN RATE</p>
+          <p class="num">68<small>%</small></p>
+          <p class="delta">↑ 4% this week</p>
+        </div>
+        <div class="stat-tile">
+          <p class="label">ACCURACY</p>
+          <p class="num">42<small>%</small></p>
+          <p class="delta">↑ 2.1%</p>
+        </div>
+        <div class="stat-tile">
+          <p class="label">WIN STREAK</p>
+          <p class="num">5</p>
+          <p class="delta">best: 8</p>
+        </div>
+        <div class="stat-tile">
+          <p class="label">TOTAL GAMES</p>
+          <p class="num">28</p>
+          <p class="delta">+6 this week</p>
+        </div>
+      </div>
+
+      <div class="archetype-section">
+        <h3>Archetype evolution</h3>
+        <p class="sub">LAST 10 GAMES · CLICK ANY PILL FOR THAT MATCH'S COACH REPORT</p>
+        <div class="arch-pills">
+          <a href="review.html" class="arch-pill">Sniper<span class="when">#019</span></a>
+          <a href="review.html" class="arch-pill">Sniper<span class="when">#020</span></a>
+          <a href="review.html" class="arch-pill">Sniper<span class="when">#021</span></a>
+          <a href="review.html" class="arch-pill shift">Sniper→Hunter<span class="when">#022</span></a>
+          <a href="review.html" class="arch-pill">Hunter<span class="when">#023</span></a>
+          <a href="review.html" class="arch-pill">Hunter<span class="when">#024</span></a>
+          <a href="review.html" class="arch-pill">Hunter<span class="when">#025</span></a>
+          <a href="review.html" class="arch-pill">Hunter<span class="when">#026</span></a>
+          <a href="review.html" class="arch-pill">Hunter<span class="when">#027</span></a>
+          <a href="review.html" class="arch-pill now">Hunter<span class="when">#028 · NOW</span></a>
+        </div>
+      </div>
+
+      <p class="section-eyebrow" style="margin-top: 24px;">RECENT MATCHES</p>
+      <ul class="recent-list">
+        <a href="review.html"><li><span class="id">#028</span><span>vs Medium bot · 6m 12s</span><span class="acc">73.9%</span><span class="arch">Hunter</span><span class="res win">W</span></li></a>
+        <a href="review.html"><li><span class="id">#027</span><span>vs Medium bot · 5m 48s</span><span class="acc">61.2%</span><span class="arch">Hunter</span><span class="res win">W</span></li></a>
+        <a href="review.html"><li><span class="id">#026</span><span>vs Hard bot · 8m 04s</span><span class="acc">38.7%</span><span class="arch">Hunter</span><span class="res loss">L</span></li></a>
+        <a href="review.html"><li><span class="id">#025</span><span>vs Medium bot · 5m 22s</span><span class="acc">52.0%</span><span class="arch">Hunter</span><span class="res win">W</span></li></a>
+      </ul>
+    </div>
+  </section>
+</main>
+<div style="height:32px;"></div>
+</body>
+</html>

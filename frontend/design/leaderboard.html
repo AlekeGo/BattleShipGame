@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Leaderboard · Ocean Strike</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+  .lb-hero {
+    padding: 36px 56px 24px 100px;
+    display: grid; grid-template-columns: 1fr auto;
+    gap: 24px; align-items: end;
+  }
+  @media (max-width:900px) { .lb-hero { grid-template-columns: 1fr; padding: 24px 20px 16px 44px; } }
+  .lb-hero h1 {
+    font-family: "Caveat", cursive; font-weight: 700;
+    font-size: 72px; line-height: 0.95; margin: 0 0 6px;
+    color: var(--ink-dark);
+  }
+  .lb-hero p {
+    font-family: "Kalam", cursive; font-size: 18px;
+    color: var(--ink-dark); max-width: 520px;
+    margin: 0;
+  }
+
+  .filter-bar {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 14px 56px;
+    border-top: 1px dashed rgba(46,31,158,0.3);
+    border-bottom: 1px dashed rgba(46,31,158,0.3);
+    margin: 0 0 0 100px;
+    margin-right: 56px;
+    font-family: "Special Elite", monospace; font-size: 12px;
+    letter-spacing: 1.5px; color: var(--ink-soft);
+  }
+  .pill-set { display: flex; gap: 6px; }
+  .pill {
+    padding: 4px 12px; border: 2px solid var(--ink);
+    background: var(--paper);
+    font-family: "Kalam", cursive; font-size: 14px; font-weight: 700;
+    color: var(--ink-dark); cursor: pointer;
+  }
+  .pill.active { background: var(--ink-dark); color: var(--paper); }
+
+  .regions {
+    padding: 24px 56px 32px 100px;
+    display: grid; gap: 36px;
+  }
+  @media (max-width: 900px) {
+    .regions { padding-left: 44px; padding-right: 20px; }
+    .filter-bar { margin-left: 44px; margin-right: 20px; padding-left: 0; padding-right: 0; }
+  }
+
+  .region {
+    position: relative;
+  }
+  .region h2 {
+    font-family: "Caveat", cursive; font-weight: 700;
+    font-size: 42px; line-height: 1; margin: 0 0 4px;
+    color: var(--ink-dark);
+    display: flex; align-items: baseline; gap: 14px;
+  }
+  .region h2 .count {
+    font-family: "Special Elite", monospace;
+    font-size: 12px; letter-spacing: 1.5px;
+    color: var(--ink-soft);
+  }
+  .region .lead {
+    font-family: "Special Elite", monospace; font-size: 11px;
+    letter-spacing: 1.5px; color: var(--hit);
+    margin: 0 0 14px;
+  }
+
+  table.lb {
+    width: 100%; border-collapse: collapse;
+    background: var(--paper);
+    border: 2.5px solid var(--ink);
+  }
+  table.lb th, table.lb td {
+    padding: 10px 14px;
+    border-bottom: 1px dashed rgba(46,31,158,0.25);
+    text-align: left;
+  }
+  table.lb th {
+    font-family: "Special Elite", monospace; font-size: 11px;
+    letter-spacing: 2px; color: var(--ink-soft);
+    background: var(--paper-dark);
+    font-weight: 400;
+  }
+  table.lb td {
+    font-family: "Kalam", cursive; font-size: 16px;
+    color: var(--ink-dark);
+  }
+  table.lb td.rank {
+    font-family: "Caveat", cursive; font-weight: 700;
+    font-size: 24px; color: var(--ink); width: 50px;
+  }
+  table.lb td.acc {
+    font-family: "Caveat", cursive; font-weight: 700;
+    font-size: 22px; color: var(--ink-dark); text-align: right;
+    width: 80px;
+  }
+  table.lb td.arch { color: var(--ink); font-family: "Caveat", cursive; font-weight: 700; font-size: 17px; }
+  table.lb tr.you { background: rgba(255,220,80,0.25); }
+  table.lb tr.you td { font-weight: 700; }
+  table.lb tr.gold td.rank { color: var(--amber); }
+  table.lb tr.silver td.rank { color: #8a8a96; }
+  table.lb tr.bronze td.rank { color: #b87530; }
+  table.lb td.player {
+    display: flex; align-items: center; gap: 8px;
+  }
+  table.lb td.player .av {
+    width: 26px; height: 26px;
+    border: 1.5px solid var(--ink); background: var(--paper-2);
+    display: flex; align-items: center; justify-content: center;
+    font-family: "Caveat", cursive; font-weight: 700;
+    color: var(--ink); font-size: 16px; line-height: 1;
+  }
+  table.lb td.streak {
+    font-family: "Special Elite", monospace; font-size: 12px;
+    color: var(--ink-soft); width: 80px;
+  }
+  table.lb td.streak.hot { color: var(--hit); }
+  table.lb tr:last-child td { border-bottom: none; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <filter id="rough"><feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="2.2"/></filter>
+</defs></svg>
+
+<main class="page" data-screen-label="leaderboard">
+  <header class="app-header">
+    <a href="index.html" class="wordmark">
+      <svg class="anchor" viewBox="0 0 32 32" aria-hidden="true">
+        <g fill="none" stroke="#2e1f9e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" filter="url(#rough)">
+          <circle cx="16" cy="6" r="3"/><line x1="16" y1="9" x2="16" y2="27"/>
+          <line x1="11" y1="13" x2="21" y2="13"/><path d="M6 22 Q16 30 26 22"/>
+        </g>
+      </svg>
+      Ocean Strike
+    </a>
+    <nav class="right">
+      <a href="play.html">New game</a>
+      <a href="profile.html" class="user-chip"><span class="avatar">A</span> asadullo</a>
+    </nav>
+  </header>
+
+  <div class="route-bar">
+    <span><span style="opacity:0.5">~/</span><span class="route">leaderboard</span> &nbsp;·&nbsp; ranked by accuracy</span>
+    <span>updated · 1m ago</span>
+  </div>
+
+  <section class="lb-hero">
+    <div>
+      <p class="section-eyebrow">THE WALL</p>
+      <h1>Who actually <span style="color:var(--ink);text-decoration:underline;text-decoration-color:var(--ink);text-decoration-thickness:5px;text-underline-offset:6px;">aims</span>.</h1>
+      <p>Ranked by accuracy, not games played. A bot at 5% accuracy doesn't get to bully a player at 60%. Bring your region or stay invisible.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+      <span class="sticker">YOU · #14 GLOBAL</span>
+      <span class="mono" style="font-size:11px;color:var(--ink-soft);letter-spacing:1.5px;">42.0% accuracy · Central Asia</span>
+    </div>
+  </section>
+
+  <div class="filter-bar">
+    <span>FILTER:</span>
+    <div class="pill-set">
+      <span class="pill active">All time</span>
+      <span class="pill">This month</span>
+      <span class="pill">This week</span>
+    </div>
+    <span style="margin-left:auto;">SORT:</span>
+    <div class="pill-set">
+      <span class="pill active">Accuracy</span>
+      <span class="pill">Win rate</span>
+      <span class="pill">Streak</span>
+    </div>
+  </div>
+
+  <section class="regions">
+
+    <!-- Region 1 — Central Asia -->
+    <div class="region">
+      <h2>Central Asia <span class="count">· 47 ranked players</span></h2>
+      <p class="lead">LEADER: <strong style="color:var(--ink);">Rustam.K</strong> · 71.2% accuracy · 12-game streak</p>
+      <table class="lb">
+        <thead>
+          <tr><th>#</th><th>PLAYER</th><th>ARCHETYPE</th><th>GAMES</th><th>STREAK</th><th style="text-align:right;">ACC</th></tr>
+        </thead>
+        <tbody>
+          <tr class="gold"><td class="rank">1</td><td class="player"><span class="av">R</span> Rustam.K</td><td class="arch">Sweeper</td><td>114</td><td class="streak hot">W12 ▲</td><td class="acc">71.2%</td></tr>
+          <tr class="silver"><td class="rank">2</td><td class="player"><span class="av">N</span> Nargiza_O</td><td class="arch">Sniper</td><td>89</td><td class="streak hot">W7</td><td class="acc">66.4%</td></tr>
+          <tr class="bronze"><td class="rank">3</td><td class="player"><span class="av">D</span> dilmurod88</td><td class="arch">Brawler</td><td>203</td><td class="streak">W3</td><td class="acc">58.9%</td></tr>
+          <tr><td class="rank">4</td><td class="player"><span class="av">S</span> Saida.M</td><td class="arch">Hunter</td><td>62</td><td class="streak">L1</td><td class="acc">54.7%</td></tr>
+          <tr><td class="rank">…</td><td class="player" style="color:var(--ink-soft);font-style:italic;">10 more rows</td><td></td><td></td><td></td><td class="acc" style="color:var(--ink-soft);">—</td></tr>
+          <tr class="you"><td class="rank">14</td><td class="player"><span class="av" style="background:var(--hit);color:#fff7e8;border-color:var(--hit);">A</span> asadullo <span class="mono" style="font-size:10px;color:var(--hit);letter-spacing:1.5px;">· YOU</span></td><td class="arch">Hunter</td><td>28</td><td class="streak hot">W5</td><td class="acc">42.0%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Region 2 — Europe West -->
+    <div class="region">
+      <h2>Europe — West <span class="count">· 312 ranked players</span></h2>
+      <p class="lead">LEADER: <strong style="color:var(--ink);">salt_admiral</strong> · 78.9% accuracy · 22-game streak</p>
+      <table class="lb">
+        <thead>
+          <tr><th>#</th><th>PLAYER</th><th>ARCHETYPE</th><th>GAMES</th><th>STREAK</th><th style="text-align:right;">ACC</th></tr>
+        </thead>
+        <tbody>
+          <tr class="gold"><td class="rank">1</td><td class="player"><span class="av">S</span> salt_admiral</td><td class="arch">Sweeper</td><td>418</td><td class="streak hot">W22 ▲</td><td class="acc">78.9%</td></tr>
+          <tr class="silver"><td class="rank">2</td><td class="player"><span class="av">M</span> Margaux.B</td><td class="arch">Sniper</td><td>166</td><td class="streak">W4</td><td class="acc">72.1%</td></tr>
+          <tr class="bronze"><td class="rank">3</td><td class="player"><span class="av">F</span> finn_de_jong</td><td class="arch">Recluse</td><td>91</td><td class="streak">L2</td><td class="acc">69.3%</td></tr>
+          <tr><td class="rank">4</td><td class="player"><span class="av">L</span> louisa_n</td><td class="arch">Hunter</td><td>74</td><td class="streak">W2</td><td class="acc">65.0%</td></tr>
+          <tr><td class="rank">5</td><td class="player"><span class="av">P</span> piotr_sails</td><td class="arch">Brawler</td><td>132</td><td class="streak hot">W6</td><td class="acc">62.8%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Region 3 — North America -->
+    <div class="region">
+      <h2>North America <span class="count">· 489 ranked players</span></h2>
+      <p class="lead">LEADER: <strong style="color:var(--ink);">grid_witch</strong> · 76.4% accuracy · 9-game streak</p>
+      <table class="lb">
+        <thead>
+          <tr><th>#</th><th>PLAYER</th><th>ARCHETYPE</th><th>GAMES</th><th>STREAK</th><th style="text-align:right;">ACC</th></tr>
+        </thead>
+        <tbody>
+          <tr class="gold"><td class="rank">1</td><td class="player"><span class="av">G</span> grid_witch</td><td class="arch">Sniper</td><td>377</td><td class="streak hot">W9</td><td class="acc">76.4%</td></tr>
+          <tr class="silver"><td class="rank">2</td><td class="player"><span class="av">J</span> jordan.q</td><td class="arch">Sweeper</td><td>208</td><td class="streak">W3</td><td class="acc">70.0%</td></tr>
+          <tr class="bronze"><td class="rank">3</td><td class="player"><span class="av">M</span> mira_cdn</td><td class="arch">Hunter</td><td>145</td><td class="streak">L1</td><td class="acc">67.2%</td></tr>
+          <tr><td class="rank">4</td><td class="player"><span class="av">T</span> Tomás.R</td><td class="arch">Brawler</td><td>312</td><td class="streak hot">W11</td><td class="acc">63.5%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty state demo -->
+    <div class="region">
+      <h2 style="color:var(--ink-soft);">Africa <span class="count">· 0 ranked players</span></h2>
+      <div class="hd-card tilt-l" style="margin-top:8px;text-align:center;padding:28px 20px;">
+        <p class="hand" style="font-size:30px;font-weight:700;color:var(--ink-dark);margin:0 0 6px;line-height:1;">Be the first.</p>
+        <p class="body-hand" style="font-size:16px;color:var(--ink-dark);margin:0 0 16px;">Nobody from Africa has set a region yet. Place a flag and you're #1 by definition.</p>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+          <a href="play.html" class="btn small">Play a ranked game</a>
+          <a href="profile.html" class="btn ghost small">Set your region</a>
+        </div>
+      </div>
+    </div>
+
+  </section>
+</main>
+
+<div style="height:32px;"></div>
+</body>
+</html>
