@@ -9,8 +9,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Stack
 
 - **Backend:** FastAPI (Python 3.11) + LangChain + OpenAI `gpt-4o-mini`, managed with `uv`. Tests via `pytest` (asyncio mode). Lint via `ruff`.
-- **Frontend:** Next.js 14 App Router + TypeScript + Tailwind + shadcn/ui, managed with `npm` (not pnpm — `npm install --legacy-peer-deps` due to peer dep conflicts).
-- **DB:** Supabase Postgres. Migrations in `backend/migrations/*.sql` (apply manually in Supabase SQL editor; no migration runner is wired up).
+- **Frontend:** Next.js 14 App Router + TypeScript + Tailwind + shadcn/ui, managed with `pnpm`. Auth via `@supabase/supabase-js` + `@supabase/ssr`.
+- **DB:** Supabase Postgres (`lwkwgcfqxmwyclwjpmxb`, region: `ap-northeast-1`). Migrations in `backend/migrations/*.sql`. All 4 migrations are already applied to the remote project — do not re-apply `0001`–`0004`.
 
 ## Common commands
 
@@ -26,11 +26,11 @@ uv run ruff format .                                 # format
 
 Frontend (from `frontend/`):
 ```bash
-npm install --legacy-peer-deps   # install (--legacy-peer-deps required)
-npm run dev                      # :3000
-npm run build
-npm run lint
-npm run typecheck                # tsc --noEmit
+pnpm install
+pnpm dev          # :3000
+pnpm build
+pnpm lint
+pnpm typecheck    # tsc --noEmit
 ```
 
 Whole stack: `docker compose up` (uses root `.env`; copy from `.env.example`).
@@ -61,7 +61,31 @@ The shape is fixed in SPEC.md §6. Notable: `POST /api/games/{id}/shoot` returns
 - `components/` — `Board` (accepts `cellStates: Record<string, CellState>`), `Cell` (states: `empty/ship/hit/miss/sunk/preview`), `ShipPlacer` (click-to-place, R to rotate, hover preview), `FleetStatus`, `CoachReport`, `UpgradeModal`, `ThemeToggle`.
 - `hooks/useGame.ts` — full game state: fetches game, handles shooting, builds `playerCells` and `enemyCells` maps for both boards.
 - `hooks/usePlacement.ts` — placement state: tracks placed/unplaced ships, selected ship, orientation, hover preview, validates placement locally before submitting.
-- `lib/api.ts` — backend client; `lib/user.ts` — anonymous `user_id` in `localStorage`; `lib/types.ts` — shared TS types.
+- `hooks/useAuth.ts` — Supabase session state: wraps `getSession` + `onAuthStateChange`, exposes `{ user, loading, signOut }`.
+- `lib/api.ts` — backend client; automatically attaches `Authorization: Bearer <token>` when a Supabase session exists.
+- `lib/user.ts` — returns `session.user.id` when signed in, falls back to anonymous UUID in `localStorage`.
+- `lib/supabase.ts` — browser Supabase client singleton (`createBrowserClient` from `@supabase/ssr`).
+- `lib/types.ts` — shared TS types.
+- `app/login/page.tsx` — sign-in / sign-up page with email/password tabs and Google OAuth button.
+- `app/auth/callback/route.ts` — OAuth code exchange handler; redirects to `/play` after session is set.
+- `components/AuthBanner.tsx` — soft gate: shows "Sign in to save your stats" only when user is anonymous and has played ≥1 game.
+- `components/NavUser.tsx` — nav pill: shows "Sign in" link when anonymous, email + "Sign out" when authenticated.
+
+## Auth system (complete)
+
+Supabase Auth with Google OAuth + email/password. Two identity tracks:
+- **Anonymous** — `POST /api/users/anon` creates a UUID stored in `localStorage`. Used when no session.
+- **Authenticated** — Supabase session. `lib/user.ts` checks session first; `lib/api.ts` sends `Authorization: Bearer <token>` on every request. Backend `get_auth_user` dependency verifies the JWT via `supabase.auth.get_user(token)` and upserts a row in `users` with `auth_id = auth.user.id`.
+
+On sign-in, anonymous history is **not merged** — the new account starts fresh.
+
+The `users` table has an `auth_id UUID UNIQUE` column (migration `0004`). Anonymous rows have `auth_id = NULL`.
+
+Google OAuth requires the provider to be enabled in Supabase dashboard (Authentication → Providers → Google). The authorized redirect URI for Google Cloud Console is: `https://lwkwgcfqxmwyclwjpmxb.supabase.co/auth/v1/callback`.
+
+**Env vars needed:**
+- `frontend/.env.local`: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (already populated)
+- `backend/.env`: `SUPABASE_SERVICE_KEY` (service role key from Supabase dashboard → Settings → API)
 
 ## Tier 0 status (complete)
 
@@ -88,7 +112,8 @@ The `/shoot` endpoint builds this from the move log by replaying shots on a fres
 
 - **Board replay pattern:** The `shoot` endpoint always reconstructs board state by creating a fresh `Board` and replaying all moves from the move log — never trusts the `hits` field stored in JSONB ship dicts directly. This is the source of truth.
 - **Next.js 14 params:** `params` in page components is a plain object (`{ id: string }`), not a Promise. Don't use `use(params)` — that's Next.js 15+.
-- **Supabase client:** Uses synchronous supabase-py 2.x inside `async` FastAPI endpoints. Acceptable for hackathon scale.
+- **Supabase client:** Uses synchronous supabase-py 2.x inside `async` FastAPI endpoints. Acceptable for hackathon scale. The service role key (`SUPABASE_SERVICE_KEY`) is required — it's used by `auth.get_user()` to verify JWTs.
+- **Leaderboard view bug fixed:** `0003_leaderboard_view.sql` originally used `SUM(jsonb_array_length(...) FILTER (...))` which is invalid SQL. Fixed to use `SUM(CASE WHEN ... THEN jsonb_array_length(...) ELSE 0 END)`. The remote DB has the correct version.
 - **CORS:** Backend allows `http://localhost:3000` by default. Change `CORS_ORIGINS` in `.env` for other origins.
 
 ## Conventions
