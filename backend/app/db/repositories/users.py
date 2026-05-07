@@ -19,6 +19,18 @@ class UsersRepo:
         res = self.db.table("users").select("*").eq("id", user_id).maybe_single().execute()
         return res.data
 
+    async def update_profile(self, user_id: str, display_name: str | None, region: str | None) -> dict:
+        data: dict = {}
+        if display_name is not None:
+            data["display_name"] = display_name
+        if region is not None:
+            data["region"] = region
+        if not data:
+            res = self.db.table("users").select("*").eq("id", user_id).maybe_single().execute()
+            return res.data
+        res = self.db.table("users").update(data).eq("id", user_id).execute()
+        return res.data[0]
+
     async def upsert_auth_user(self, auth_id: str, email: str) -> dict:
         data = {"id": auth_id, "auth_id": auth_id, "email": email}
         res = (
