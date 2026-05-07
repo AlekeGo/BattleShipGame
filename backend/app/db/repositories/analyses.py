@@ -15,7 +15,7 @@ class AnalysesRepo:
             .maybe_single()
             .execute()
         )
-        return res.data
+        return res.data if res else None
 
     async def create(
         self,
