@@ -2,77 +2,121 @@
 
 > The only Battleship that makes you better at Battleship.
 
-LLM-powered Battleship with a post-game Coach that analyzes your behavioral patterns (shot entropy, parity discipline, post-hit follow-through, placement tendencies) and tells you, in plain language, how to play better.
+**[Play now →](https://battle-ship-game-rho.vercel.app)**
 
-See [SPEC.md](./SPEC.md) for the full technical specification.
+---
 
-## Stack
+## Что это такое
 
-- **Frontend:** Next.js 14 (App Router) + TypeScript + Tailwind + shadcn/ui
-- **Backend:** FastAPI (Python 3.11) + LangChain + OpenAI `gpt-4o-mini`
-- **DB:** Supabase Postgres
-- **Hosting:** Vercel (FE), Railway (BE)
+Ocean Strike — это Морской бой с ИИ-тренером. После каждой партии GPT-4o-mini анализирует **ваш стиль игры**: насколько системно вы стреляли, добивали ли корабли после попадания, правильно ли расставляли флот. Вы получаете конкретный разбор, а не просто "победил / проиграл".
 
-## Local dev
+Это не ещё один клон Морского боя. Это инструмент для тех, кто хочет **играть осознанно**.
+
+---
+
+## Для кого это
+
+- **Случайный игрок** — хочет быстро сыграть и получить что-то интересное после партии, а не просто экран "вы проиграли".
+- **Соревновательный игрок** — хочет понять свои слабые места и видеть прогресс через статистику.
+- **Школьные турниры** — платформа подходит для организации состязаний с лидербордом.
+
+---
+
+## Почему это ценно
+
+Большинство игр дают вам результат. Ocean Strike даёт вам **обратную связь**. Это ключевое отличие, которое создаёт возвращаемость — игроки хотят улучшить свой рейтинг и "переиграть" тренера.
+
+---
+
+## Возможности
+
+| Фича | Уровень |
+|------|---------|
+| Игра против бота (Easy / Medium / Hard) | Сильный |
+| Авто-расстановка кораблей | Сильный |
+| Авторизация (email + Google OAuth) | Сильный |
+| История партий и статистика | Сильный |
+| Глобальный лидерборд | Сильный |
+| Тёмная / светлая тема | Сильный |
+| Адаптивный дизайн (mobile-first) | Сильный |
+| ИИ-тренер с анализом стратегии | **Великий** |
+| Кнопка "Upgrade to Pro" | **Великий** |
+
+### Что анализирует ИИ-тренер
+
+- **Parity discipline** — стреляли ли вы по шахматной сетке или хаотично
+- **Post-hit follow-through** — добивали ли корабль после первого попадания
+- **Shot entropy** — насколько предсказуемы ваши выстрелы
+- **Placement tendencies** — склонность ставить корабли по углам / краям
+- **Wasted shots** — лишние выстрелы после потопления
+
+---
+
+## Бизнес-потенциал
+
+- **Freemium:** базовая игра бесплатна. Pro-тариф — детальная аналитика по каждому ходу, кастомные скины, неограниченная история.
+- **B2B:** лицензия для школ и образовательных платформ (турнирный режим, групповая статистика).
+- **Retention loop:** архетип игрока ("Охотник", "Снайпер", "Хаотик") меняется с ростом мастерства — мотивирует возвращаться.
+
+---
+
+## Стек
+
+- **Frontend:** Next.js 14 (App Router) + TypeScript + Tailwind + shadcn/ui → Vercel
+- **Backend:** FastAPI (Python 3.11) + LangChain + OpenAI `gpt-4o-mini` → Railway
+- **DB:** Supabase Postgres (авторизация + история партий + лидерборд)
+
+---
+
+## Локальный запуск
 
 ```bash
 # Backend
 cd backend
 uv sync
-uv run uvicorn app.main:app --reload
+uv run uvicorn app.main:app --reload   # :8000
 
 # Frontend
 cd frontend
 npm install --legacy-peer-deps
-npm run dev
+npm run dev                            # :3000
 ```
 
-Copy `.env.example` to `.env` and fill in keys.
+Скопируйте `.env.example` в `.env` и заполните ключи (`SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `OPENAI_API_KEY`).
 
-## Deployment
+---
+
+## Деплой
 
 ### Backend → Railway
 
-1. Create a new Railway project and add a **service from GitHub repo**.
-2. Set the **Root Directory** to `backend/` in the service settings — Railway will pick up `backend/Dockerfile` automatically.
-3. Add the following environment variables in the Railway dashboard (Variables tab):
+1. Создайте сервис из GitHub-репозитория, **Root Directory** = `backend/`.
+2. Добавьте переменные окружения:
 
-   | Variable | Value |
+   | Переменная | Значение |
    |---|---|
-   | `SUPABASE_URL` | Your Supabase project URL |
-   | `SUPABASE_SERVICE_KEY` | Service role key from Supabase → Settings → API |
-   | `OPENAI_API_KEY` | Your OpenAI key (required for the Coach) |
-   | `CORS_ORIGINS` | Your Vercel frontend URL, e.g. `https://your-app.vercel.app` |
-
-4. Railway injects `PORT` automatically — the Dockerfile uses `${PORT:-8000}` so no extra config is needed.
-5. After the first deploy, copy the Railway-generated public URL (e.g. `https://your-app.up.railway.app`) — you'll need it for the frontend.
+   | `SUPABASE_URL` | URL проекта Supabase |
+   | `SUPABASE_SERVICE_KEY` | Service role key → Supabase → Settings → API |
+   | `OPENAI_API_KEY` | Ключ OpenAI (нужен для тренера) |
+   | `CORS_ORIGINS` | URL фронтенда на Vercel |
 
 ### Frontend → Vercel
 
-1. Import the GitHub repo in Vercel. Set the **Root Directory** to `frontend/`.
-2. Vercel will auto-detect Next.js. No build command changes needed.
-3. Add the following environment variables in the Vercel dashboard (Settings → Environment Variables):
+1. Импортируйте репозиторий, **Root Directory** = `frontend/`.
+2. Добавьте переменные окружения:
 
-   | Variable | Value |
+   | Переменная | Значение |
    |---|---|
-   | `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL |
-   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Anon/public key from Supabase → Settings → API |
-   | `NEXT_PUBLIC_API_URL` | Your Railway backend URL from the step above |
+   | `NEXT_PUBLIC_SUPABASE_URL` | URL проекта Supabase |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Anon key → Supabase → Settings → API |
+   | `NEXT_PUBLIC_API_URL` | URL Railway-бэкенда |
 
-4. Deploy. After the first deploy, copy the Vercel URL and update `CORS_ORIGINS` in Railway to match.
-
-> **Supabase auth callback:** If using Google OAuth, the authorized redirect URI in Google Cloud Console must be `https://<your-supabase-project>.supabase.co/auth/v1/callback`. This is already documented in the Supabase dashboard under Authentication → Providers → Google.
-
-## What's different
-
-- No ads, no paywalls on the core loop
-- AI Coach that cites your actual moves, not generic advice
-- Stat-driven progression: archetype evolution over time
+---
 
 ## Roadmap
 
-- Multiplayer-by-link (WebSocket rooms)
-- 3-Minute Blitz mode
-- Pro tier: custom skins, deep analytics
-- School Tournament mode
-- Coach Pro: per-move analysis
+- [ ] Мультиплеер по ссылке (WebSocket)
+- [ ] Режим "3-минутный блиц"
+- [ ] Pro: анализ каждого хода, кастомные скины
+- [ ] Турнирный режим для школ
+- [ ] Stripe-интеграция для Pro-подписки
