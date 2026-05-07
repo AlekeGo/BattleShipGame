@@ -42,7 +42,7 @@ Server-authoritative game state — the frontend never knows where the bot's shi
 ### Backend layout (`backend/app/`)
 
 - `main.py` — FastAPI app, mounts the routers under `/api/*`.
-- `api/` — thin HTTP layer: `users`, `games`, `analyze`, `stats`, `leaderboard`. `users` and `games` are fully implemented; `analyze`, `stats`, `leaderboard` are stubs.
+- `api/` — thin HTTP layer: `users`, `games`, `analyze`, `stats`, `leaderboard`. `users`, `games`, and `analyze` are fully implemented; `stats`, `leaderboard` are stubs.
 - `engine/` — pure Python game logic, **no FastAPI/DB imports**. Unit-testable in isolation. Contains `board.py`, `fleet.py` (includes `validate_fleet` and `auto_place`), `coords.py`, `features.py`, and `bots/` (`random_bot`, `hunt_bot`, `prob_bot` for Easy/Medium/Hard). Keep this boundary clean — adding I/O here breaks the test seam.
 - `coach/` — LangChain pipeline: `prompts.py`, `chain.py` (uses `with_structured_output` against a Pydantic model in `schemas/coach.py`), `archetypes.py`.
 - `schemas/` — Pydantic request/response models (`user`, `game`, `shot`, `coach`).
@@ -86,6 +86,7 @@ Google OAuth requires the provider to be enabled in Supabase dashboard (Authenti
 **Env vars needed:**
 - `frontend/.env.local`: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (already populated)
 - `backend/.env`: `SUPABASE_SERVICE_KEY` (service role key from Supabase dashboard → Settings → API)
+- `backend/.env`: `OPENAI_API_KEY` — **required for Tier 1 Coach**. Without it the `/analyze` endpoint returns 500.
 
 ## Tier 0 status (complete)
 
@@ -94,6 +95,16 @@ All Tier 0 features are implemented and tested:
 - API: `POST /api/users/anon`, `POST /api/games`, `POST /api/games/{id}/place`, `POST /api/games/{id}/place-auto`, `POST /api/games/{id}/shoot`, `GET /api/games/{id}`
 - Frontend: mode select → ship placement → active game with shoot interaction, hit/miss/sunk visuals, win/loss screen
 - **Gap:** Hot-seat mode — backend handles it (no bot move returned), but frontend lacks a "pass device" overlay to hide ships between turns
+
+## Tier 1 status (complete)
+
+All Tier 1 features are implemented — 50 tests passing total:
+- **`engine/features.py`** — `extract_features(moves, player_ships, bot_difficulty)` computes 9 behavioral metrics: `total_shots`, `accuracy_pct`, `parity_adherence`, `post_hit_followthrough`, `shot_entropy`, `wasted_shots_after_sink`, `placement_corners`, `placement_edges`, `avg_time_per_shot`. 19 dedicated unit tests.
+- **`db/repositories/analyses.py`** — `get(game_id)` and `create(...)` against the `analyses` Supabase table. Uses `upsert` on conflict to handle concurrent precompute + explicit POST race.
+- **`deps.py`** — exposes `get_analyses_repo`.
+- **`api/analyze.py`** — `POST /api/games/{id}/analyze` is idempotent: checks DB cache first, only calls LLM on first request. `_run_analysis()` is a standalone async function (also called by the precompute hook).
+- **`api/games.py`** — `/shoot` fires `asyncio.create_task(_run_analysis(...))` when `game_over=True` so the LLM call starts before the user navigates to the review page.
+- **Frontend** — `CoachReport.tsx` renders animated skeleton while waiting, error state on failure, full analysis when ready. Review page at `/game/[id]/review` is wired and working.
 
 ## Bot state contract
 
@@ -115,6 +126,10 @@ The `/shoot` endpoint builds this from the move log by replaying shots on a fres
 - **Supabase client:** Uses synchronous supabase-py 2.x inside `async` FastAPI endpoints. Acceptable for hackathon scale. The service role key (`SUPABASE_SERVICE_KEY`) is required — it's used by `auth.get_user()` to verify JWTs.
 - **Leaderboard view bug fixed:** `0003_leaderboard_view.sql` originally used `SUM(jsonb_array_length(...) FILTER (...))` which is invalid SQL. Fixed to use `SUM(CASE WHEN ... THEN jsonb_array_length(...) ELSE 0 END)`. The remote DB has the correct version.
 - **CORS:** Backend allows `http://localhost:3000` by default. Change `CORS_ORIGINS` in `.env` for other origins.
+- **`analyses.maybe_single()` guard:** `supabase-py` can return `None` from `maybe_single().execute()` when no row exists (instead of a response with `data=None`). Always guard with `res.data if res else None`.
+- **`analyses` upsert:** `AnalysesRepo.create()` uses `upsert(on_conflict="game_id")` instead of `insert()` to handle the race between the fire-and-forget precompute task and an explicit POST from the frontend.
+- **`_run_analysis` concurrency guard:** At the start of `_run_analysis`, a DB cache check is performed again before calling the LLM — prevents double LLM calls if background task and explicit POST arrive simultaneously.
+- **LangChain version:** Using `langchain>=0.3`, `langchain-openai>=0.2`. The `chain.py` uses `ChatOpenAI(...).with_structured_output(CoachAnalysis)` with a `ChatPromptTemplate` — this API is stable across 0.3.x and 1.x.
 
 ## Conventions
 
